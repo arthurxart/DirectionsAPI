@@ -32,6 +32,10 @@ if (!require('sf')){
   install.packages('sf')
 }
 library('sf')
+if (!require('leaflet')){
+  install.packages('leaflet')
+}
+library('leaflet')
 ```
 
 ## Rural points
@@ -438,4 +442,174 @@ qtm(route_otp_paris)
 ```{r}
 otp_stop()
 ```
- 
+
+## Fourth API: Mapbox
+
+Mapbox is a big company that contributed a lot to openstreetmap because it was kinda built on it.
+so for this API you need a token (you have some free usage per month) because its not opensource.
+
+```{r}
+if (!require('mapboxapi')){
+  install.packages('mapboxapi')
+}
+library('mapboxapi')
+
+#my_token <- "your token"
+#mb_access_token(my_token, install = TRUE, overwrite = TRUE)
+```
+
+Then we are gonna send the itineraries to the api and wait for an answer, then you can display the results
+
+```{r}
+route_mb_creuse <- list()
+for (i in 1:length(coord_osrm_creuse)) {
+  route_mb_creuse[[i]] <- mb_directions(
+    origin = coord_osrm_creuse[[i]][[1]],
+    destination = coord_osrm_creuse[[i]][[2]],
+    profile = "driving",
+    access_token = my_token
+  )
+}
+saveRDS(object = route_mb_creuse, file = "route_mb_creuse.rds")
+route_mb_creuse <- readRDS(file = "route_mb_creuse.rds")
+
+route_mb_lyon <- list()
+for (i in 1:length(coord_osrm_lyon)) {
+  route_mb_lyon[[i]] <- mb_directions(
+    origin = coord_osrm_lyon[[i]][[1]],
+    destination = coord_osrm_lyon[[i]][[2]],
+    profile = "driving",
+    access_token = my_token
+  )
+}
+saveRDS(object = route_mb_lyon, file = "route_mb_lyon.rds")
+route_mb_lyon <- readRDS(file = "route_mb_lyon.rds")
+
+route_mb_idf <- list()
+for (i in 1:length(coord_osrm_idf)) {
+  route_mb_idf[[i]] <- mb_directions(
+    origin = coord_osrm_idf[[i]][[1]],
+    destination = coord_osrm_idf[[i]][[2]],
+    profile = "driving",
+    access_token = my_token
+  )
+}
+
+saveRDS(object = route_mb_idf, file = "route_mb_idf.rds")
+route_mb_idf <- readRDS(file = "route_mb_idf.rds")
+
+r_mb_creuse <- bind_rows(route_mb_creuse)
+qtm(r_mb_creuse)
+r_mb_lyon <- bind_rows(route_mb_lyon)
+qtm(r_mb_lyon)
+r_mb_idf <- bind_rows(route_mb_idf)
+qtm(r_mb_idf)
+```
+
+## Fifth API: Googlemaps
+
+Everybody know google maps so its a reference for our analysis test.
+You also have to signup for a key because its not opensource.
+
+```{r}
+if (!require('mapsapi')){
+  install.packages('mapsapi')
+}
+library('mapsapi')
+
+key = "your key"
+```
+
+Same thing that for mapbox
+
+```{r}
+route_maps_creuse <- list()
+for (i in 1:length(coord_osrm_creuse)) {
+  doc <- mp_directions(
+    origin = coord_osrm_creuse[[i]][[1]],
+    destination = coord_osrm_creuse[[i]][[2]],
+    key = key,
+    quiet = TRUE
+  )
+  route_maps_creuse[[i]] <- mp_get_routes(doc)
+}
+saveRDS(object = route_maps_creuse, file = "route_maps_creuse.rds")
+route_maps_creuse <- readRDS(file = "route_maps_creuse.rds")
+r_maps_creuse <- bind_rows(route_maps_creuse)
+qtm(r_maps_creuse)
+
+route_maps_lyon <- list()
+for (i in 1:length(coord_osrm_lyon)) {
+  doc <- mp_directions(
+    origin = coord_osrm_lyon[[i]][[1]],
+    destination = coord_osrm_lyon[[i]][[2]],
+    key = key,
+    quiet = TRUE
+  )
+  route_maps_lyon[[i]] <- mp_get_routes(doc)
+}
+saveRDS(object = route_maps_lyon, file = "route_maps_lyon.rds")
+route_maps_lyon <- readRDS(file = "route_maps_lyon.rds")
+r_maps_lyon <- bind_rows(route_maps_lyon)
+qtm(r_maps_lyon)
+
+route_maps_idf <- list()
+for (i in 1:length(coord_osrm_idf)) {
+  doc <- mp_directions(
+    origin = coord_osrm_idf[[i]][[1]],
+    destination = coord_osrm_idf[[i]][[2]],
+    key = key,
+    quiet = TRUE
+  )
+  route_maps_idf[[i]] <- mp_get_routes(doc)
+}
+saveRDS(object = route_maps_idf, file = "route_maps_idf.rds")
+route_maps_idf <- readRDS(file = "route_maps_idf.rds")
+r_maps_idf<- bind_rows(route_maps_idf)
+qtm(r_maps_idf)
+```
+
+## Sixth API: OpenRouteService
+
+ORS is opensource and made by a german university (heidelberg) and it is a fork of GraphHopper.
+So you can make your own server (on docker) but you also can signup for an api key from their server wich is pretty generous.
+
+```{r}
+if (!require('openrouteservice')){
+  remotes::install_github('GIScience/openrouteservice-r')
+}
+library('openrouteservice')
+
+ors_api_key("your_key")
+```
+
+Then same thing:
+
+```{r}
+route_ors_creuse <- list()
+for (i in 477:length(coord_osrm_creuse)) {
+  route_ors_creuse[[i]] <- ors_directions(coord_osrm_creuse[[i]], format="geojson", output = "sf")
+}
+route_ors_lyon <- list()
+for (i in 368:length(coord_osrm_lyon)) {
+  route_ors_lyon[[i]] <- ors_directions(coord_osrm_lyon[[i]], format="geojson", output = "sf")
+}
+route_ors_idf <- list()
+for (i in 481:length(coord_osrm_idf)) {
+  route_ors_idf[[i]] <- ors_directions(coord_osrm_idf[[i]], format="geojson", output = "sf")
+}
+
+saveRDS(object = route_ors_creuse, file = "route_ors_creuse.rds")
+saveRDS(object = route_ors_lyon, file = "route_ors_lyon.rds")
+saveRDS(object = route_ors_idf, file = "route_ors_idf.rds")
+route_ors_creuse <- readRDS(file = "route_ors_creuse.rds")
+route_ors_lyon <- readRDS(file = "route_ors_lyon.rds")
+route_ors_idf <- readRDS(file = "route_ors_idf.rds")
+r_ors_idf <- bind_rows(route_ors_idf)
+r_ors_lyon <- bind_rows(route_ors_lyon)
+r_ors_creuse <- bind_rows(route_ors_creuse)
+qtm(r_ors_idf)
+qtm(r_ors_lyon)
+qtm(r_ors_creuse)
+```
+
