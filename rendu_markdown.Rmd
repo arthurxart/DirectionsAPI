@@ -193,6 +193,7 @@ sf_route_creuse <- bind_rows(route_list_creuse)
 sf_route_lyon <- bind_rows(route_list_lyon)
 sf_route_paris <- bind_rows(route_list_paris)
 
+#tmap_mode("view")
 qtm(sf_route_creuse)
 qtm(sf_route_lyon)
 qtm(sf_route_paris)
