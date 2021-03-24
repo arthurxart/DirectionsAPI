@@ -174,9 +174,9 @@ And we stock the routes into list
 #      returnclass = "sf")
 #    }
 #}
-route_list_creuse <- readRDS(file = "route_list_creuse.rds")
-route_list_lyon <- readRDS(file = "route_list_lyon.rds")
-route_list_paris <- readRDS(file = "route_list_paris.rds")
+route_list_creuse <- readRDS(file = "data/route_list_creuse.rds")
+route_list_lyon <- readRDS(file = "data/route_list_lyon.rds")
+route_list_paris <- readRDS(file = "data/route_list_paris.rds")
 ```
 
 We can bind_rows() them if we want to make an sf dataframe for displaying them trough tmap viewing tool qtm(),
@@ -193,7 +193,6 @@ sf_route_creuse <- bind_rows(route_list_creuse)
 sf_route_lyon <- bind_rows(route_list_lyon)
 sf_route_paris <- bind_rows(route_list_paris)
 
-tmap_mode("view") 
 qtm(sf_route_creuse)
 qtm(sf_route_lyon)
 qtm(sf_route_paris)
@@ -247,11 +246,11 @@ library('graphhopper')
 then we have to connect with the API inside Rstudio
 
 ```{r}
-if(!exists("route_gh_creuse")){
-  API_URL <- "http://localhost:8989"
-  gh_set_api_url(API_URL)
-  info <- gh_get_info()
-}
+#if(!exists("route_gh_creuse")){
+#  API_URL <- "http://localhost:8989"
+#  gh_set_api_url(API_URL)
+#  info <- gh_get_info()
+#}
 ```
 
 We also have to give the coordinates to GraphHopper into a lat long format so the osrm coordinates need to be inverted
@@ -302,9 +301,9 @@ Then we can run GraphHopper with the 500 points of origin and destination
 #    (route_gh_paris[[i]] <- gh_get_route(coord_inv_paris[[i]]) %>% gh_as_sf())
 #    }
 #}
-route_gh_creuse <- readRDS(file = "route_gh_creuse.rds")
-route_gh_lyon <- readRDS(file = "route_gh_lyon.rds")
-route_gh_paris <- readRDS(file = "route_gh_idf.rds")
+route_gh_creuse <- readRDS(file = "data/route_gh_creuse.rds")
+route_gh_lyon <- readRDS(file = "data/route_gh_lyon.rds")
+route_gh_paris <- readRDS(file = "data/route_gh_idf.rds")
 ```
 
 To visualize them we can do the same as for the osrm routes:
@@ -314,7 +313,6 @@ r_gh_creuse <- bind_rows(route_gh_creuse)
 r_gh_lyon <- bind_rows(route_gh_lyon)
 r_gh_paris <- bind_rows(route_gh_paris)
 
-tmap_mode("view") 
 qtm(r_gh_creuse)
 qtm(r_gh_lyon)
 qtm(r_gh_paris)
@@ -426,12 +424,17 @@ point_sf_parisb <- bind_rows(point_sf_parisb)
 #route_otp_idf <- otp_plan(otpcon,
 #                          point_sf_idf,
 #                          point_sf_idfb)
-route_otp_creuse <- readRDS(file = "route_otp_creuse.rds")
-route_otp_lyon <- readRDS(file = "route_otp_lyon.rds")
-route_otp_paris <- readRDS(file = "route_otp_idf.rds")
+route_otp_creuse <- readRDS(file = "data/route_otp_creuse.rds")
+route_otp_lyon <- readRDS(file = "data/route_otp_lyon.rds")
+route_otp_paris <- readRDS(file = "data/route_otp_idf.rds")
 qtm(route_otp_creuse)
 qtm(route_otp_lyon)
 qtm(route_otp_paris)
 ```
  
+ and for stopping the otp java program you do this:
+ 
+```{r}
+otp_stop()
+```
  
