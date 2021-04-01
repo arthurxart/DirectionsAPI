@@ -474,6 +474,7 @@ for (i in 1:length(coord_osrm_creuse)) {
     origin = coord_osrm_creuse[[i]][[1]],
     destination = coord_osrm_creuse[[i]][[2]],
     profile = "driving",
+    overview = "full",
     access_token = my_token
   )
 }
@@ -484,6 +485,7 @@ for (i in 1:length(coord_osrm_lyon)) {
     origin = coord_osrm_lyon[[i]][[1]],
     destination = coord_osrm_lyon[[i]][[2]],
     profile = "driving",
+    overview = "full",
     access_token = my_token
   )
 }
@@ -494,6 +496,7 @@ for (i in 1:length(coord_osrm_paris)) {
     origin = coord_osrm_paris[[i]][[1]],
     destination = coord_osrm_paris[[i]][[2]],
     profile = "driving",
+    overview = "full",
     access_token = my_token
  )
 }
