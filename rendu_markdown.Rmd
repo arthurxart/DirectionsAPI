@@ -227,6 +227,25 @@ for (i in 1:length(route_list_paris)) {
 }
 ```
 
+for the matrices of time
+we use osrmTable() to give us the times of each itineraries (500 times 500 so 250000)
+
+```{r eval=FALSE}
+table_creuse <- osrmTable(
+  src = x_c,
+  dst = y_c
+)
+table_lyon <- osrmTable(
+  src = x_l,
+  dst = y_l
+)
+table_paris <- osrmTable(
+  src = x_p,
+  dst = y_p
+)
+```
+
+
 ## Second API GraphHopper
 
 GraphHopper is a german open source project used by Deutsche Bahn and Flixbus. You will need java 8 installed for this one and the next.
