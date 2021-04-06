@@ -9,4 +9,3 @@ For all the test cases I will create 500 randomised points of origins and destin
 
 All contributions are welcomed.
 
-(excuse my bad english I am french)
