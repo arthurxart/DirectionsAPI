@@ -301,7 +301,7 @@ for (i in 1:length(coord_osrm_paris)) {
 }
 ```
 
-Then we can run GraphHopper with the 500 points of origin and destination
+Then we can run GraphHopper with the 500 points of origin and destination and we add an id so they are reachable easily
 
 ```{r eval=FALSE}
 if(!exists("route_gh_creuse")){
@@ -309,24 +309,34 @@ if(!exists("route_gh_creuse")){
   for (i in 1:length(coord_inv_creuse)) {
     (route_gh_creuse[[i]] <- gh_get_route(coord_inv_creuse[[i]]) %>% gh_as_sf())
     }
+  for (i in 1:length(route_gh_creuse)) {
+  route_gh_creuse[[i]]$id <- i
+  }
 }
 
+}
 if(!exists("route_gh_lyon")){
   route_gh_lyon <- list()
   for (i in 1:length(coord_inv_lyon)) {
     (route_gh_lyon[[i]] <- gh_get_route(coord_inv_lyon[[i]]) %>% gh_as_sf())
-    }
+  }
+  for (i in 1:length(route_gh_lyon)) {
+  route_gh_lyon[[i]]$id <- i
+  }
 }
 
 if(!exists("route_gh_paris")){
   route_gh_paris <- list()
   for (i in 1:length(coord_inv_paris)) {
     (route_gh_paris[[i]] <- gh_get_route(coord_inv_paris[[i]]) %>% gh_as_sf())
-    }
+  }
+  for (i in 1:length(route_gh_paris)) {
+  route_gh_idf[[i]]$id <- i
+  }
 }
 ```
 
-To visualize them we can do the same as for the osrm routes:
+To visualize them we can do the same as for the osrm routes and we can also put them in the same projection (lambert 93 so 2154, the standard projection for France)
 
 ```{r}
 route_gh_creuse <- readRDS(file = "data/route_gh_creuse.rds")
@@ -336,6 +346,10 @@ route_gh_paris <- readRDS(file = "data/route_gh_idf.rds")
 r_gh_creuse <- bind_rows(route_gh_creuse)
 r_gh_lyon <- bind_rows(route_gh_lyon)
 r_gh_paris <- bind_rows(route_gh_paris)
+
+r_gh_creuse <- st_transform(r_gh_creuse, 2154)
+r_gh_lyon <- st_transform(r_gh_lyon, 2154)
+r_gh_paris <- st_transform(r_gh_paris, 2154)
 
 qtm(r_gh_creuse)
 qtm(r_gh_lyon)
@@ -398,39 +412,49 @@ otpcon <- otp_connect(router = 'paris')
 We put the coordinates of the osrm results back in sf format to process them all at once
  
 ```{r}
+
 #creuse
-point_sf_creuse <- list()
+point_sfc_creuse <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_creuse)) {
-  point_sf_creuse[[i]] <- st_sf(st_sfc(st_point(coord_osrm_creuse[[i]][[1]]),  crs = 4326))
+  point_sfc_creuse[i] <- st_point(coord_osrm_creuse[[i]][[1]])
 }
-point_sf_creuseb <- list()
+point_sfc_creuseb <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_creuse)) {
-  point_sf_creuseb[[i]] <- st_sf(st_sfc(st_point(coord_osrm_creuse[[i]][[2]]),  crs = 4326))
+  point_sfc_creuseb[i] <- st_point(coord_osrm_creuse[[i]][[2]])
 }
-point_sf_creuse <- bind_rows(point_sf_creuse)
-point_sf_creuseb <- bind_rows(point_sf_creuseb)
+point_sf_creuse <- st_sf(point_sfc_creuse)
+point_sf_creuse$id <- 1:nrow(point_sf_creuse)
+point_sf_creuseb <- st_sf(point_sfc_creuseb)
+point_sf_creuseb$id <- 1:nrow(point_sf_creuseb)
+
 #lyon
-point_sf_lyon <- list()
+point_sfc_lyon <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_lyon)) {
-  point_sf_lyon[[i]] <- st_sf(st_sfc(st_point(coord_osrm_lyon[[i]][[1]]),  crs = 4326))
+  point_sfc_lyon[i] <- st_point(coord_osrm_lyon[[i]][[1]])
 }
-point_sf_lyonb <- list()
+point_sfc_lyonb <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_lyon)) {
-  point_sf_lyonb[[i]] <- st_sf(st_sfc(st_point(coord_osrm_lyon[[i]][[2]]),  crs = 4326))
+  point_sfc_lyonb[i] <- st_point(coord_osrm_lyon[[i]][[2]])
 }
-point_sf_lyon <- bind_rows(point_sf_lyon)
-point_sf_lyonb <- bind_rows(point_sf_lyonb)
+
+point_sf_lyon <- st_sf(point_sfc_lyon)
+point_sf_lyon$id <- 1:nrow(point_sf_lyon)
+point_sf_lyonb <- st_sf(point_sfc_lyonb)
+point_sf_lyonb$id <- 1:nrow(point_sf_lyonb)
 #idf
-point_sf_paris <- list()
+point_sfc_paris <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_paris)) {
-  point_sf_paris[[i]] <- st_sf(st_sfc(st_point(coord_osrm_paris[[i]][[1]]),  crs = 4326))
+  point_sfc_paris[i] <- st_point(coord_osrm_paris[[i]][[1]])
 }
-point_sf_parisb <- list()
+point_sfc_parisb <- st_sfc(NA, crs = 4326)
 for (i in 1:length(coord_osrm_paris)) {
-  point_sf_paris[[i]] <- st_sf(st_sfc(st_point(coord_osrm_paris[[i]][[2]]),  crs = 4326))
+  point_sfc_parisb[i] <- st_point(coord_osrm_paris[[i]][[2]])
 }
-point_sf_paris <- bind_rows(point_sf_paris)
-point_sf_parisb <- bind_rows(point_sf_parisb)
+
+point_sf_paris <- st_sf(point_sfc_paris)
+point_sf_paris$id <- 1:nrow(point_sf_paris)
+point_sf_parisb <- st_sf(point_sfc_parisb)
+point_sf_parisb$id <- 1:nrow(point_sf_parisb)
 ```
  
  
@@ -451,12 +475,17 @@ route_otp_idf <- otp_plan(otpcon,
 
 ```
 
-and we display them
+and we display them after we change their projection for lambert 93
  
 ```{r}
 route_otp_creuse <- readRDS(file = "data/route_otp_creuse.rds")
 route_otp_lyon <- readRDS(file = "data/route_otp_lyon.rds")
 route_otp_paris <- readRDS(file = "data/route_otp_idf.rds")
+
+route_otp_creuse <- st_transform(route_otp_creuse, 2154)
+route_otp_lyon <- st_transform(route_otp_lyon, 2154)
+route_otp_paris <- st_transform(route_otp_paris, 2154)
+
 qtm(route_otp_creuse)
 qtm(route_otp_lyon)
 qtm(route_otp_paris)
@@ -484,7 +513,7 @@ my_token <- "your token"
 mb_access_token(my_token, install = TRUE, overwrite = TRUE)
 ```
 
-Then we are gonna send the itineraries to the api and wait for an answer
+Then we are gonna send the itineraries to the api and wait for an answer (and assign them an id)
 
 ```{r eval=FALSE}
 route_mb_creuse <- list()
@@ -497,6 +526,9 @@ for (i in 1:length(coord_osrm_creuse)) {
     access_token = my_token
   )
 }
+for (i in 1:length(route_mb_creuse)) {
+  route_mb_creuse[[i]]$id <- i
+}
 
 route_mb_lyon <- list()
 for (i in 1:length(coord_osrm_lyon)) {
@@ -507,6 +539,9 @@ for (i in 1:length(coord_osrm_lyon)) {
     overview = "full",
     access_token = my_token
   )
+}
+for (i in 1:length(route_mb_lyon)) {
+  route_mb_lyon[[i]]$id <- i
 }
 
 route_mb_paris <- list()
@@ -519,9 +554,12 @@ for (i in 1:length(coord_osrm_paris)) {
     access_token = my_token
  )
 }
+for (i in 1:length(route_mb_paris)) {
+  route_mb_paris[[i]]$id <- i
+}
 ```
  
-then you can display the results
+then you can display the results, after putting them in the same projection as the others
 
 ```{r}
 route_mb_creuse <- readRDS(file = "data/route_mb_creuse.rds")
@@ -529,10 +567,15 @@ route_mb_lyon <- readRDS(file = "data/route_mb_lyon.rds")
 route_mb_paris <- readRDS(file = "data/route_mb_idf.rds")
 
 r_mb_creuse <- bind_rows(route_mb_creuse)
-qtm(r_mb_creuse)
 r_mb_lyon <- bind_rows(route_mb_lyon)
-qtm(r_mb_lyon)
 r_mb_paris <- bind_rows(route_mb_paris)
+
+r_mb_creuse <- st_transform(r_mb_creuse, 2154)
+r_mb_lyon <- st_transform(r_mb_lyon, 2154)
+r_mb_paris <- st_transform(r_mb_paris, 2154)
+
+qtm(r_mb_creuse)
+qtm(r_mb_lyon)
 qtm(r_mb_paris)
 ```
 
@@ -552,7 +595,7 @@ library('mapsapi')
 key = "your key"
 ```
 
-Same thing that for mapbox
+Same thing that for mapbox (with an id)
 
 ```{r eval=FALSE}
 route_maps_creuse <- list()
@@ -565,6 +608,9 @@ route_maps_creuse <- list()
    )
    route_maps_creuse[[i]] <- mp_get_routes(doc)
 }
+for (i in 1:length(route_maps_creuse)) {
+  route_maps_creuse[[i]]$id <- i
+}
 
 route_maps_lyon <- list()
 for (i in 1:length(coord_osrm_lyon)) {
@@ -575,6 +621,9 @@ for (i in 1:length(coord_osrm_lyon)) {
     quiet = TRUE
   )
   route_maps_lyon[[i]] <- mp_get_routes(doc)
+}
+for (i in 1:length(route_maps_lyon)) {
+  route_maps_lyon[[i]]$id <- i
 }
 
 route_maps_paris <- list()
@@ -587,19 +636,28 @@ for (i in 1:length(coord_osrm_paris)) {
   )
   route_maps_paris[[i]] <- mp_get_routes(doc)
 }
+for (i in 1:length(route_maps_paris)) {
+  route_maps_paris[[i]]$id <- i
+}
 ```
 
-and we display the results
+and we display the results (after putting them in sf and transforming the results in lambert 93)
 
 ```{r}
 route_maps_creuse <- readRDS(file = "data/route_maps_creuse.rds")
-r_maps_creuse <- bind_rows(route_maps_creuse)
-qtm(r_maps_creuse)
 route_maps_lyon <- readRDS(file = "data/route_maps_lyon.rds")
-r_maps_lyon <- bind_rows(route_maps_lyon)
-qtm(r_maps_lyon)
 route_maps_paris <- readRDS(file = "data/route_maps_idf.rds")
+
+r_maps_creuse <- bind_rows(route_maps_creuse)
+r_maps_lyon <- bind_rows(route_maps_lyon)
 r_maps_paris<- bind_rows(route_maps_paris)
+
+r_maps_creuse <- st_transform(r_maps_creuse, 2154)
+r_maps_lyon <- st_transform(r_maps_lyon, 2154)
+r_maps_paris <- st_transform(r_maps_paris, 2154)
+
+qtm(r_maps_creuse)
+qtm(r_maps_lyon)
 qtm(r_maps_paris)
 ```
 
@@ -618,35 +676,50 @@ library('openrouteservice')
 ors_api_key("your_key")
 ```
 
-Then same thing:
+Then same thing (with an id) except you might have to retry at each error with i+1 and they are a lot of errors for Lyon
 
 ```{r eval=FALSE}
 route_ors_creuse <- list()
-for (i in 477:length(coord_osrm_creuse)) {
+for (i in 1:length(coord_osrm_creuse)) {
   route_ors_creuse[[i]] <- ors_directions(coord_osrm_creuse[[i]], format="geojson", output = "sf")
 }
+for (i in 1:length(route_ors_creuse)) {
+  route_ors_creuse[[i]]$id <- i
+}
 route_ors_lyon <- list()
-for (i in 368:length(coord_osrm_lyon)) {
+for (i in 1:length(coord_osrm_lyon)) {
   route_ors_lyon[[i]] <- ors_directions(coord_osrm_lyon[[i]], format="geojson", output = "sf")
 }
+for (i in 1:length(route_ors_lyon)) {
+  route_ors_lyon[[i]]$id <- i
+}
 route_ors_paris <- list()
-for (i in 481:length(coord_osrm_paris)) {
+for (i in 1:length(coord_osrm_paris)) {
   route_ors_paris[[i]] <- ors_directions(coord_osrm_paris[[i]], format="geojson", output = "sf")
+}
+for (i in 1:length(route_ors_paris)) {
+  route_ors_paris[[i]]$id <- i
 }
 ```
 
-and we display that
+and we display that (sf and transforming into lambert 93)
 
 ```{r}
 route_ors_creuse <- readRDS(file = "data/route_ors_creuse.rds")
 route_ors_lyon <- readRDS(file = "data/route_ors_lyon.rds")
 route_ors_paris <- readRDS(file = "data/route_ors_idf.rds")
-r_ors_paris <- bind_rows(route_ors_paris)
-r_ors_lyon <- bind_rows(route_ors_lyon)
+
 r_ors_creuse <- bind_rows(route_ors_creuse)
-qtm(r_ors_paris)
-qtm(r_ors_lyon)
+r_ors_lyon <- bind_rows(route_ors_lyon)
+r_ors_paris <- bind_rows(route_ors_paris)
+
+r_ors_creuse <- st_transform(r_ors_creuse, 2154)
+r_ors_lyon <- st_transform(r_ors_lyon, 2154)
+r_ors_paris <- st_transform(r_ors_paris, 2154)
+
 qtm(r_ors_creuse)
+qtm(r_ors_lyon)
+qtm(r_ors_paris)
 ```
 
 
@@ -665,7 +738,7 @@ library('r5r')
 options(java.parameters = "-Xmx2G")
 ```
 
-Then we can setup the routing graph and calculate our itineraries, setting up the cores from where there is our pbf file.
+Then we can setup the routing graph and calculate our itineraries, setting up the cores from where your pbf file is.
 
 ```{r eval=FALSE}
 pt_creuse_4326$id <- 1:nrow(pt_creuse_4326)
@@ -703,14 +776,19 @@ route_r5r_paris <- detailed_itineraries(
 stop_r5(r5r_core)
 ```
 
-and we display the itineraries
+and we display the itineraries (wich are already sf so we can transform them directly into lambert 93)
 
 ```{r}
 route_r5r_creuse <- readRDS(file = "data/route_r5r_creuse.rds")
-qtm(route_r5r_creuse)
 route_r5r_lyon <- readRDS(file = "data/route_r5r_lyon.rds")
-qtm(route_r5r_lyon)
 route_r5r_paris <- readRDS(file = "data/route_r5r_idf.rds")
+
+route_r5r_creuse <- st_transform(route_r5r_creuse, 2154)
+route_r5r_lyon <- st_transform(route_r5r_lyon, 2154)
+route_r5r_paris <- st_transform(route_r5r_paris, 2154)
+
+qtm(route_r5r_creuse)
+qtm(route_r5r_lyon)
 qtm(route_r5r_paris)
 ```
 
