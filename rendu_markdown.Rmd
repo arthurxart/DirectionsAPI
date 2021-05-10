@@ -212,7 +212,7 @@ There should be no error here so we are gonna use the coordinates that osrm tran
 
 These coordinates are gonna be usefull to have less error from the others api because they have more errors otherwise.
 
-```{r}
+```{r eval=FALSE}
 coord_osrm_creuse <- list()
 for (i in 1:length(route_list_creuse)) {
   coordinates_wgs <- st_coordinates(st_transform(route_list_creuse[[i]], 4326))
@@ -232,6 +232,12 @@ for (i in 1:length(route_list_paris)) {
   coord_osrm_paris[[i]] <- list(c(coordinates_wgs[1,1],coordinates_wgs[1,2]),c(coordinates_wgs[l,1], coordinates_wgs[l,2]))
 }
 ```
+```{r}
+coord_osrm_creuse <- readRDS(file = "data/coord_osrm_creuse.rds")
+coord_osrm_lyon <- readRDS(file = "data/coord_osrm_lyon.rds")
+coord_osrm_paris <- readRDS(file = "data/coord_osrm_paris.rds")
+```
+
 
 for the matrices of time
 we use osrmTable() to give us the times of each itineraries (500 times 500 so 250000)
@@ -241,14 +247,22 @@ table_creuse <- osrmTable(
   src = x_c,
   dst = y_c
 )
+matrix_osrm_creuse <- table_creuse$durations
 table_lyon <- osrmTable(
   src = x_l,
   dst = y_l
 )
+matrix_osrm_lyon <- table_lyon$durations
 table_paris <- osrmTable(
   src = x_p,
   dst = y_p
 )
+matrix_osrm_paris <- table_paris$durations
+```
+```{r}
+matrix_osrm_creuse <- readRDS(file = "data/matrix_osrm_creuse.rds")
+matrix_osrm_lyon <- readRDS(file = "data/matrix_osrm_lyon.rds")
+matrix_osrm_paris <- readRDS(file = "data/matrix_osrm_paris.rds")
 ```
 
 
@@ -624,7 +638,6 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_creuse, file = "data/matrix_mb_creuse.rds")
-matrix_mb_creuse <- readRDS(file = "data/matrix_mb_creuse.rds")
 
 # matrix for lyon
 
@@ -641,7 +654,6 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_lyon, file = "data/matrix_mb_lyon.rds")
-matrix_mb_lyon <- readRDS(file = "data/matrix_mb_lyon.rds")
 
 # matrix for paris
 
@@ -658,6 +670,10 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_paris, file = "data/matrix_mb_paris.rds")
+```
+```{r}
+matrix_mb_creuse <- readRDS(file = "data/matrix_mb_creuse.rds")
+matrix_mb_lyon <- readRDS(file = "data/matrix_mb_lyon.rds")
 matrix_mb_paris <- readRDS(file = "data/matrix_mb_paris.rds")
 ```
 
@@ -761,7 +777,7 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_creuse, file = "data/matrix_maps_creuse.rds")
-matrix_maps_creuse <- readRDS(file = "data/matrix_maps_creuse.rds")
+
 matrix_maps_creuse[0:10,0:10] /60
 matrix_maps_lyon <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
 for(c in seq(0,490,10)){
@@ -778,7 +794,7 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_lyon, file = "data/matrix_maps_lyon.rds")
-matrix_maps_lyon <- readRDS(file = "data/matrix_maps_lyon.rds")
+
 matrix_maps_paris <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
 for(c in seq(0,490,10)){
   for(r in seq(0,490,10)){
@@ -794,6 +810,11 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_paris, file = "data/matrix_maps_paris.rds")
+
+```
+```{r}
+matrix_maps_creuse <- readRDS(file = "data/matrix_maps_creuse.rds")
+matrix_maps_lyon <- readRDS(file = "data/matrix_maps_lyon.rds")
 matrix_maps_paris <- readRDS(file = "data/matrix_maps_paris.rds")
 ```
 
@@ -895,6 +916,11 @@ for(c in seq(0,900,100)){
     matrix_ors_paris[((c/2)+1):((c/2)+50),((r/2)+1):((r/2)+50)] <- m_ors_paris$durations / 60
   }
 }
+```
+```{r}
+matrix_ors_creuse <- readRDS(file = "data/matrix_ors_creuse.rds")
+matrix_ors_lyon <- readRDS(file = "data/matrix_ors_lyon.rds")
+matrix_ors_paris <- readRDS(file = "data/matrix_ors_paris.rds")
 ```
 
 
@@ -998,6 +1024,10 @@ matrix_r5r_idf <- travel_time_matrix(r5r_core = r5r_core,
 stop_r5(r5r_core)
 rJava::.jgc(R.gc = TRUE)
 ```
+```{r}
+matrix_r5r_creuse <- readRDS(file = "data/matrix_r5r_creuse.rds")
+```
+
 
 ## Comparison between the differents API
 
@@ -1068,18 +1098,30 @@ if (!require('tidyverse')){
   install.packages('tidyverse')
 }
 library('tidyverse')
-#display the data for creuse
-d_c <- pivot_longer(comparison_creuse, cols = -id)
-ggplot(d_c, mapping = aes(x = value, color = name)) +
-  geom_density()
-#display the data for lyon
-d_l <- pivot_longer(comparison_lyon, cols = -id)
-ggplot(d_l, mapping = aes(x = value, color = name)) +
-  geom_density()
-#display the data for paris
-d_p <- pivot_longer(comparison_paris, cols = -id)
-ggplot(d_p, mapping = aes(x = value, color = name)) +
-  geom_density()
+
+#display x = osm apis and y = maps/mapbox points for all regions
+comparison_creuse$region <- "creuse"
+comparison_lyon$region <- "lyon"
+comparison_paris$region <- "paris"
+comparison_all <- rbind.data.frame(comparison_creuse, comparison_lyon)
+comparison_all <- rbind.data.frame(comparison_all, comparison_paris)
+
+display_maps <- ggplot(comparison_all, mapping = aes(y = maps, colour = region))
+
+display_maps + geom_point(aes(x = osrm))
+display_maps + geom_point(aes(x = graphhopper))
+display_maps + geom_point(aes(x = otp))
+display_maps + geom_point(aes(x = ors))
+display_maps + geom_point(aes(x = r5r))
+
+display_mb <- ggplot(comparison_all, mapping = aes(y = mapbox, colour = region))
+
+display_mb + geom_point(aes(x = osrm))
+display_mb + geom_point(aes(x = graphhopper))
+display_mb + geom_point(aes(x = otp))
+display_mb + geom_point(aes(x = ors))
+display_mb + geom_point(aes(x = r5r))
+
 ```
 
 We now can calculate the mean, median and standard deviation but we have to make the zeros to NA value to not underestimating the values.
