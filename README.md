@@ -1,7 +1,7 @@
 DirectionsAPI
 ================
 Arthur Artaud
-3/18/2021
+5/10/2021
 
 -   [Librabries](#librabries)
 -   [Rural points](#rural-points)
@@ -17,12 +17,14 @@ Arthur Artaud
 -   [Comparison between the differents
     API](#comparison-between-the-differents-api)
 
-This is a comparison of the different directions API that use OpenStreetMap.
+This is a comparison of the different directions API that use
+OpenStreetMap.
 
 I will compare them to the google maps API and the mapbox API.
 
-I will be using R principally and 3 different configurations : rural, suburban and urban to test the differences.
-For all the test cases I will create 500 randomised points of origins and destinations.
+I will be using R principally and 3 different configurations : rural,
+suburban and urban to test the differences. For all the test cases I
+will create 500 randomised points of origins and destinations.
 
 All contributions are welcomed.
 
@@ -445,16 +447,12 @@ library('RcppSimdJson')
 ```
 
 Then we build the graph with the osm.pbf file that you put (that dont
-need to be rebuilt after) and we setup the local instance.
+need to rebuild after).
 
 The osm.pbf files need to be put into the
 OTP/graphs/&lt;name-of-the-osm.pbf-directory&gt; with a name that you
 will call for building and setting the instances (here creuse, lyon and
 paris).
-
-You also want to build and set them each one at a time for performance
-reasons and because otherwise you need to specify a new port for the
-users.
 
 ``` r
 #setting up the path
@@ -468,18 +466,6 @@ path_otp <- otp_dl_jar(path_data, cache = FALSE)
 log_creuse <- otp_build_graph(otp = path_otp, dir = path_data, router = 'creuse', memory = 4294)
 log_lyon <- otp_build_graph(otp = path_otp, dir = path_data, router = 'lyon', memory = 4294)
 log_paris <- otp_build_graph(otp = path_otp, dir = path_data, router = 'paris', memory = 4294)
-
-#setting up the local instance :
-
-log_creuse2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'creuse')
-log_lyon2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'lyon')
-log_paris2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'paris')
-
-#connect to the routers :
-
-otpcon <- otp_connect(router = 'creuse')
-otpcon <- otp_connect(router = 'lyon')
-otpcon <- otp_connect(router = 'paris')
 ```
 
 We put the coordinates of the osrm results back in sf format to process
@@ -532,20 +518,50 @@ point_sf_parisb$id <- 1:nrow(point_sf_parisb)
 
 Then we process the itineraries from the instance (you can process
 faster with ncores = 2 or more in fonction of the cores of your
-processor -1)
+processor -1) then stop and set and connect the local instance for the
+other region
 
 ``` r
+#for creuse
+log_creuse2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'creuse')
+otpcon <- otp_connect(router = 'creuse')
+
+
 route_otp_creuse <- otp_plan(otpcon,
-                            point_sf_creuse,
-                             point_sf_creuseb)
+                             point_sf_creuse,
+                             point_sf_creuseb,
+                             fromID = as.character(point_sf_creuse$id),
+                             toID = as.character(point_sf_creuseb$id),
+                             ncores = 3)
+qtm(route_otp_creuse)
+otp_stop()
+
+#For lyon
+log_lyon2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'lyon')
+otpcon <- otp_connect(router = 'lyon')
 
 route_otp_lyon <- otp_plan(otpcon,
                            point_sf_lyon,
-                           point_sf_lyonb)
+                           point_sf_lyonb,
+                           fromID = as.character(point_sf_lyon$id),
+                           toID = as.character(point_sf_lyonb$id),
+                           ncores = 3)
+qtm(route_otp_lyon)
+otp_stop()
 
-route_otp_idf <- otp_plan(otpcon,
-                          point_sf_idf,
-                          point_sf_idfb)
+#for paris
+
+log_paris2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'paris')
+otpcon <- otp_connect(router = 'paris')
+
+route_otp_paris <- otp_plan(otpcon,
+                          point_sf_paris,
+                          point_sf_parisb,
+                          fromID = as.character(point_sf_paris$id),
+                          toID = as.character(point_sf_parisb$id),
+                          ncores = 3)
+qtm(route_otp_paris)
+otp_stop()
 ```
 
 and we display them after we change their projection for lambert 93
@@ -1275,4 +1291,89 @@ comparison_paris <- comparison_paris %>%
   mutate(median = apply(comparison_paris[2:8],1,FUN = median, na.rm = TRUE))
 comparison_paris <- comparison_paris %>% 
   mutate(sd = apply(comparison_paris[2:8],1,FUN = sd, na.rm = TRUE))
+
+summary(comparison_creuse)
 ```
+
+    ##        id             osrm         graphhopper          mapbox       
+    ##  Min.   :  1.0   Min.   :  1.90   Min.   :  1.429   Min.   :  1.624  
+    ##  1st Qu.:125.8   1st Qu.: 40.17   1st Qu.: 35.086   1st Qu.: 39.328  
+    ##  Median :250.5   Median : 57.35   Median : 50.751   Median : 55.485  
+    ##  Mean   :250.5   Mean   : 57.60   Mean   : 50.887   Mean   : 55.619  
+    ##  3rd Qu.:375.2   3rd Qu.: 75.45   3rd Qu.: 66.808   3rd Qu.: 71.998  
+    ##  Max.   :500.0   Max.   :126.03   Max.   :114.831   Max.   :130.236  
+    ##                                                                      
+    ##       maps              ors               r5r               otp        
+    ##  Min.   :  2.617   Min.   :  1.438   Min.   :  1.567   Min.   :  1.45  
+    ##  1st Qu.: 34.633   1st Qu.: 37.140   1st Qu.: 62.317   1st Qu.: 47.52  
+    ##  Median : 50.075   Median : 53.445   Median : 94.467   Median : 66.17  
+    ##  Mean   : 49.876   Mean   : 54.396   Mean   : 86.789   Mean   : 67.83  
+    ##  3rd Qu.: 64.771   3rd Qu.: 71.153   3rd Qu.:119.475   3rd Qu.: 89.33  
+    ##  Max.   :113.783   Max.   :123.810   Max.   :119.967   Max.   :143.83  
+    ##                    NA's   :1         NA's   :9         NA's   :1       
+    ##       mean             median              sd         
+    ##  Min.   :  1.718   Min.   :  1.567   Min.   : 0.4065  
+    ##  1st Qu.: 42.974   1st Qu.: 39.145   1st Qu.: 9.7858  
+    ##  Median : 61.933   Median : 55.457   Median :14.7914  
+    ##  Mean   : 60.503   Mean   : 55.822   Mean   :13.8602  
+    ##  3rd Qu.: 79.469   3rd Qu.: 72.963   3rd Qu.:18.2186  
+    ##  Max.   :124.642   Max.   :124.692   Max.   :27.9716  
+    ## 
+
+``` r
+summary(comparison_lyon)
+```
+
+    ##        id             osrm          graphhopper          mapbox       
+    ##  Min.   :  1.0   Min.   : 0.3883   Min.   : 0.2687   Min.   : 0.9219  
+    ##  1st Qu.:125.8   1st Qu.: 6.7962   1st Qu.: 5.2273   1st Qu.:10.9093  
+    ##  Median :250.5   Median : 9.6350   Median : 7.3287   Median :15.0231  
+    ##  Mean   :250.5   Mean   : 9.9670   Mean   : 7.6422   Mean   :15.0980  
+    ##  3rd Qu.:375.2   3rd Qu.:12.7546   3rd Qu.: 9.9409   3rd Qu.:19.2638  
+    ##  Max.   :500.0   Max.   :25.5667   Max.   :17.6486   Max.   :32.8873  
+    ##                                                                       
+    ##       maps              ors              r5r             otp         
+    ##  Min.   : 0.8167   Min.   : 0.495   Min.   : 1.00   Min.   : 0.8333  
+    ##  1st Qu.:10.4250   1st Qu.: 7.160   1st Qu.:10.03   1st Qu.:11.7583  
+    ##  Median :14.1750   Median :10.502   Median :14.04   Median :16.8583  
+    ##  Mean   :14.1373   Mean   :10.692   Mean   :14.59   Mean   :17.0406  
+    ##  3rd Qu.:17.7375   3rd Qu.:13.977   3rd Qu.:19.09   3rd Qu.:21.9167  
+    ##  Max.   :32.0000   Max.   :24.622   Max.   :35.23   Max.   :38.1500  
+    ##                    NA's   :10                       NA's   :44       
+    ##       mean             median              sd        
+    ##  Min.   : 0.8891   Min.   : 0.8333   Min.   :0.2486  
+    ##  1st Qu.: 9.0546   1st Qu.: 9.2845   1st Qu.:2.6254  
+    ##  Median :12.6743   Median :12.7017   Median :3.6365  
+    ##  Mean   :12.7142   Mean   :12.8752   Mean   :3.6850  
+    ##  3rd Qu.:16.3552   3rd Qu.:16.4501   3rd Qu.:4.5909  
+    ##  Max.   :27.9438   Max.   :28.5500   Max.   :7.9629  
+    ## 
+
+``` r
+summary(comparison_paris)
+```
+
+    ##        id             osrm         graphhopper         mapbox      
+    ##  Min.   :  1.0   Min.   : 2.363   Min.   : 1.851   Min.   : 2.243  
+    ##  1st Qu.:125.8   1st Qu.:19.875   1st Qu.:16.958   1st Qu.:21.570  
+    ##  Median :250.5   Median :27.453   Median :23.668   Median :30.421  
+    ##  Mean   :250.5   Mean   :28.426   Mean   :24.486   Mean   :31.514  
+    ##  3rd Qu.:375.2   3rd Qu.:36.573   3rd Qu.:31.300   3rd Qu.:40.260  
+    ##  Max.   :500.0   Max.   :59.860   Max.   :52.201   Max.   :87.643  
+    ##                                                                    
+    ##       maps             ors              r5r               otp        
+    ##  Min.   : 2.483   Min.   : 2.057   Min.   :  2.167   Min.   : 2.733  
+    ##  1st Qu.:20.163   1st Qu.:20.715   1st Qu.: 32.179   1st Qu.:24.137  
+    ##  Median :27.317   Median :28.442   Median : 49.725   Median :32.267  
+    ##  Mean   :28.143   Mean   :28.923   Mean   : 52.837   Mean   :32.378  
+    ##  3rd Qu.:36.337   3rd Qu.:37.580   3rd Qu.: 70.037   3rd Qu.:40.675  
+    ##  Max.   :59.950   Max.   :59.288   Max.   :119.917   Max.   :63.083  
+    ##                   NA's   :7                          NA's   :8       
+    ##       mean           median            sd        
+    ##  Min.   : 2.40   Min.   : 2.43   Min.   : 0.202  
+    ##  1st Qu.:22.91   1st Qu.:21.04   1st Qu.: 5.559  
+    ##  Median :31.58   Median :28.58   Median : 8.703  
+    ##  Mean   :32.41   Mean   :29.43   Mean   :10.073  
+    ##  3rd Qu.:41.47   3rd Qu.:38.15   3rd Qu.:13.654  
+    ##  Max.   :68.46   Max.   :59.47   Max.   :29.220  
+    ## 

@@ -1,12 +1,12 @@
 ---
 title: "DirectionsAPI"
 author: "Arthur Artaud"
-date: "3/18/2021"
+date: "5/10/2021"
 output:
-  html_document:
+  github_document:
     toc: true
     toc_depth: 2
-    toc_float: true
+    #toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -385,11 +385,9 @@ if (!require('RcppSimdJson')){
 library('RcppSimdJson')
 ```
 
-Then we build the graph with the osm.pbf file that you put (that dont need to be rebuilt after) and we setup the local instance.
+Then we build the graph with the osm.pbf file that you put (that dont need to rebuild after).
 
 The osm.pbf files need to be put into the OTP/graphs/<name-of-the-osm.pbf-directory> with a name that you will call for building and setting the instances (here creuse, lyon and paris).
-
-You also want to build and set them each one at a time for performance reasons and because otherwise you need to specify a new port for the users.
  
 ```{r eval=FALSE}
 #setting up the path
@@ -404,17 +402,6 @@ log_creuse <- otp_build_graph(otp = path_otp, dir = path_data, router = 'creuse'
 log_lyon <- otp_build_graph(otp = path_otp, dir = path_data, router = 'lyon', memory = 4294)
 log_paris <- otp_build_graph(otp = path_otp, dir = path_data, router = 'paris', memory = 4294)
 
-#setting up the local instance :
-
-log_creuse2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'creuse')
-log_lyon2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'lyon')
-log_paris2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'paris')
-
-#connect to the routers :
-
-otpcon <- otp_connect(router = 'creuse')
-otpcon <- otp_connect(router = 'lyon')
-otpcon <- otp_connect(router = 'paris')
 ```
  
 We put the coordinates of the osrm results back in sf format to process them all at once
@@ -466,20 +453,49 @@ point_sf_parisb$id <- 1:nrow(point_sf_parisb)
 ```
  
  
-Then we process the itineraries from the instance (you can process faster with ncores = 2 or more in fonction of the cores of your processor -1)
+Then we process the itineraries from the instance (you can process faster with ncores = 2 or more in fonction of the cores of your processor -1) then stop and set and connect the local instance for the other region
  
 ```{r eval=FALSE}
+#for creuse
+log_creuse2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'creuse')
+otpcon <- otp_connect(router = 'creuse')
+
+
 route_otp_creuse <- otp_plan(otpcon,
-                            point_sf_creuse,
-                             point_sf_creuseb)
+                             point_sf_creuse,
+                             point_sf_creuseb,
+                             fromID = as.character(point_sf_creuse$id),
+                             toID = as.character(point_sf_creuseb$id),
+                             ncores = 3)
+qtm(route_otp_creuse)
+otp_stop()
+
+#For lyon
+log_lyon2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'lyon')
+otpcon <- otp_connect(router = 'lyon')
 
 route_otp_lyon <- otp_plan(otpcon,
                            point_sf_lyon,
-                           point_sf_lyonb)
+                           point_sf_lyonb,
+                           fromID = as.character(point_sf_lyon$id),
+                           toID = as.character(point_sf_lyonb$id),
+                           ncores = 3)
+qtm(route_otp_lyon)
+otp_stop()
 
-route_otp_idf <- otp_plan(otpcon,
-                          point_sf_idf,
-                          point_sf_idfb)
+#for paris
+
+log_paris2 <- otp_setup(otp = path_otp, dir =  path_data, router = 'paris')
+otpcon <- otp_connect(router = 'paris')
+
+route_otp_paris <- otp_plan(otpcon,
+                          point_sf_paris,
+                          point_sf_parisb,
+                          fromID = as.character(point_sf_paris$id),
+                          toID = as.character(point_sf_parisb$id),
+                          ncores = 3)
+qtm(route_otp_paris)
+otp_stop()
 
 ```
 
@@ -1094,5 +1110,9 @@ comparison_paris <- comparison_paris %>%
   mutate(median = apply(comparison_paris[2:8],1,FUN = median, na.rm = TRUE))
 comparison_paris <- comparison_paris %>% 
   mutate(sd = apply(comparison_paris[2:8],1,FUN = sd, na.rm = TRUE))
+
+summary(comparison_creuse)
+summary(comparison_lyon)
+summary(comparison_paris)
 ```
 
