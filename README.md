@@ -17,7 +17,6 @@ Arthur Artaud
 -   [Comparison between the differents
     API](#comparison-between-the-differents-api)
 
-# DirectionsAPI
 This is a comparison of the different directions API that use OpenStreetMap.
 
 I will compare them to the google maps API and the mapbox API.
