@@ -267,6 +267,12 @@ for (i in 1:length(route_list_paris)) {
 }
 ```
 
+``` r
+coord_osrm_creuse <- readRDS(file = "data/coord_osrm_creuse.rds")
+coord_osrm_lyon <- readRDS(file = "data/coord_osrm_lyon.rds")
+coord_osrm_paris <- readRDS(file = "data/coord_osrm_paris.rds")
+```
+
 for the matrices of time we use osrmTable() to give us the times of each
 itineraries (500 times 500 so 250000)
 
@@ -275,14 +281,23 @@ table_creuse <- osrmTable(
   src = x_c,
   dst = y_c
 )
+matrix_osrm_creuse <- table_creuse$durations
 table_lyon <- osrmTable(
   src = x_l,
   dst = y_l
 )
+matrix_osrm_lyon <- table_lyon$durations
 table_paris <- osrmTable(
   src = x_p,
   dst = y_p
 )
+matrix_osrm_paris <- table_paris$durations
+```
+
+``` r
+matrix_osrm_creuse <- readRDS(file = "data/matrix_osrm_creuse.rds")
+matrix_osrm_lyon <- readRDS(file = "data/matrix_osrm_lyon.rds")
+matrix_osrm_paris <- readRDS(file = "data/matrix_osrm_paris.rds")
 ```
 
 ## Second API GraphHopper
@@ -407,19 +422,19 @@ r_gh_paris <- st_transform(r_gh_paris, 2154)
 qtm(r_gh_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 qtm(r_gh_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ``` r
 qtm(r_gh_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-15-3.png)<!-- --> and
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-17-3.png)<!-- --> and
 unfortunately we can’t have the matrix from graphhopper because this
 feature is not opensource
 
@@ -578,19 +593,19 @@ route_otp_paris <- st_transform(route_otp_paris, 2154)
 qtm(route_otp_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 qtm(route_otp_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
 
 ``` r
 qtm(route_otp_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-22-3.png)<!-- -->
 
 and for stopping the otp java program you do this:
 
@@ -683,19 +698,19 @@ r_mb_paris <- st_transform(r_mb_paris, 2154)
 qtm(r_mb_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 qtm(r_mb_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-26-2.png)<!-- -->
 
 ``` r
 qtm(r_mb_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-24-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-26-3.png)<!-- -->
 
 For mapbox matrix we used the mb\_matrix() function wich takes sfc
 points, its likely to take a bit of time because we put a sys.sleep()
@@ -718,7 +733,6 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_creuse, file = "data/matrix_mb_creuse.rds")
-matrix_mb_creuse <- readRDS(file = "data/matrix_mb_creuse.rds")
 
 # matrix for lyon
 
@@ -735,7 +749,6 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_lyon, file = "data/matrix_mb_lyon.rds")
-matrix_mb_lyon <- readRDS(file = "data/matrix_mb_lyon.rds")
 
 # matrix for paris
 
@@ -752,6 +765,11 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_mb_paris, file = "data/matrix_mb_paris.rds")
+```
+
+``` r
+matrix_mb_creuse <- readRDS(file = "data/matrix_mb_creuse.rds")
+matrix_mb_lyon <- readRDS(file = "data/matrix_mb_lyon.rds")
 matrix_mb_paris <- readRDS(file = "data/matrix_mb_paris.rds")
 ```
 
@@ -834,19 +852,19 @@ r_maps_paris <- st_transform(r_maps_paris, 2154)
 qtm(r_maps_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 qtm(r_maps_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-28-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 qtm(r_maps_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-28-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-31-3.png)<!-- -->
 
 For the matrix googlemaps its almost like mapbox but we use mp\_matrix()
 and mp\_get\_matrix() to have the right format from the json response of
@@ -869,7 +887,7 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_creuse, file = "data/matrix_maps_creuse.rds")
-matrix_maps_creuse <- readRDS(file = "data/matrix_maps_creuse.rds")
+
 matrix_maps_creuse[0:10,0:10] /60
 matrix_maps_lyon <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
 for(c in seq(0,490,10)){
@@ -886,7 +904,7 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_lyon, file = "data/matrix_maps_lyon.rds")
-matrix_maps_lyon <- readRDS(file = "data/matrix_maps_lyon.rds")
+
 matrix_maps_paris <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
 for(c in seq(0,490,10)){
   for(r in seq(0,490,10)){
@@ -902,6 +920,11 @@ for(c in seq(0,490,10)){
   }
 }
 saveRDS(object = matrix_maps_paris, file = "data/matrix_maps_paris.rds")
+```
+
+``` r
+matrix_maps_creuse <- readRDS(file = "data/matrix_maps_creuse.rds")
+matrix_maps_lyon <- readRDS(file = "data/matrix_maps_lyon.rds")
 matrix_maps_paris <- readRDS(file = "data/matrix_maps_paris.rds")
 ```
 
@@ -970,19 +993,19 @@ r_ors_paris <- st_transform(r_ors_paris, 2154)
 qtm(r_ors_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 ``` r
 qtm(r_ors_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-2.png)<!-- -->
 
 ``` r
 qtm(r_ors_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-33-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-3.png)<!-- -->
 
 For ORS matrix we used ors\_matrix() with a dataframe of the
 coord\_osrm.
@@ -1016,6 +1039,12 @@ for(c in seq(0,900,100)){
     matrix_ors_paris[((c/2)+1):((c/2)+50),((r/2)+1):((r/2)+50)] <- m_ors_paris$durations / 60
   }
 }
+```
+
+``` r
+matrix_ors_creuse <- readRDS(file = "data/matrix_ors_creuse.rds")
+matrix_ors_lyon <- readRDS(file = "data/matrix_ors_lyon.rds")
+matrix_ors_paris <- readRDS(file = "data/matrix_ors_paris.rds")
 ```
 
 ## Seventh API: R5
@@ -1092,19 +1121,19 @@ route_r5r_paris <- st_transform(route_r5r_paris, 2154)
 qtm(route_r5r_creuse)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
 qtm(route_r5r_lyon)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-42-2.png)<!-- -->
 
 ``` r
 qtm(route_r5r_paris)
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-37-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-42-3.png)<!-- -->
 
 for the r5r matrix we used travel\_time\_matrix() but it is not made for
 big networks so we couldnt make more than the creuse one
@@ -1133,6 +1162,10 @@ matrix_r5r_idf <- travel_time_matrix(r5r_core = r5r_core,
                                         mode = mode)
 stop_r5(r5r_core)
 rJava::.jgc(R.gc = TRUE)
+```
+
+``` r
+matrix_r5r_creuse <- readRDS(file = "data/matrix_r5r_creuse.rds")
 ```
 
 ## Comparison between the differents API
@@ -1236,31 +1269,76 @@ if (!require('tidyverse')){
   install.packages('tidyverse')
 }
 library('tidyverse')
-#display the data for creuse
-d_c <- pivot_longer(comparison_creuse, cols = -id)
-ggplot(d_c, mapping = aes(x = value, color = name)) +
-  geom_density()
+
+#display x = osm apis and y = maps/mapbox points for all regions
+comparison_creuse$region <- "creuse"
+comparison_lyon$region <- "lyon"
+comparison_paris$region <- "paris"
+comparison_all <- rbind.data.frame(comparison_creuse, comparison_lyon)
+comparison_all <- rbind.data.frame(comparison_all, comparison_paris)
+
+display_maps <- ggplot(comparison_all, mapping = aes(y = maps, colour = region))
+
+display_maps + geom_point(aes(x = osrm))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
 
 ``` r
-#display the data for lyon
-d_l <- pivot_longer(comparison_lyon, cols = -id)
-ggplot(d_l, mapping = aes(x = value, color = name)) +
-  geom_density()
+display_maps + geom_point(aes(x = graphhopper))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-41-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-2.png)<!-- -->
 
 ``` r
-#display the data for paris
-d_p <- pivot_longer(comparison_paris, cols = -id)
-ggplot(d_p, mapping = aes(x = value, color = name)) +
-  geom_density()
+display_maps + geom_point(aes(x = otp))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-41-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-3.png)<!-- -->
+
+``` r
+display_maps + geom_point(aes(x = ors))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-4.png)<!-- -->
+
+``` r
+display_maps + geom_point(aes(x = r5r))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-5.png)<!-- -->
+
+``` r
+display_mb <- ggplot(comparison_all, mapping = aes(y = mapbox, colour = region))
+
+display_mb + geom_point(aes(x = osrm))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-6.png)<!-- -->
+
+``` r
+display_mb + geom_point(aes(x = graphhopper))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-7.png)<!-- -->
+
+``` r
+display_mb + geom_point(aes(x = otp))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-8.png)<!-- -->
+
+``` r
+display_mb + geom_point(aes(x = ors))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-9.png)<!-- -->
+
+``` r
+display_mb + geom_point(aes(x = r5r))
+```
+
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-10.png)<!-- -->
 
 We now can calculate the mean, median and standard deviation but we have
 to make the zeros to NA value to not underestimating the values.
@@ -1311,13 +1389,13 @@ summary(comparison_creuse)
     ##  3rd Qu.: 64.771   3rd Qu.: 71.153   3rd Qu.:119.475   3rd Qu.: 89.33  
     ##  Max.   :113.783   Max.   :123.810   Max.   :119.967   Max.   :143.83  
     ##                    NA's   :1         NA's   :9         NA's   :1       
-    ##       mean             median              sd         
-    ##  Min.   :  1.718   Min.   :  1.567   Min.   : 0.4065  
-    ##  1st Qu.: 42.974   1st Qu.: 39.145   1st Qu.: 9.7858  
-    ##  Median : 61.933   Median : 55.457   Median :14.7914  
-    ##  Mean   : 60.503   Mean   : 55.822   Mean   :13.8602  
-    ##  3rd Qu.: 79.469   3rd Qu.: 72.963   3rd Qu.:18.2186  
-    ##  Max.   :124.642   Max.   :124.692   Max.   :27.9716  
+    ##     region               mean             median              sd         
+    ##  Length:500         Min.   :  1.718   Min.   :  1.567   Min.   : 0.4065  
+    ##  Class :character   1st Qu.: 42.974   1st Qu.: 39.145   1st Qu.: 9.7858  
+    ##  Mode  :character   Median : 61.933   Median : 55.457   Median :14.7914  
+    ##                     Mean   : 60.503   Mean   : 55.822   Mean   :13.8602  
+    ##                     3rd Qu.: 79.469   3rd Qu.: 72.963   3rd Qu.:18.2186  
+    ##                     Max.   :124.642   Max.   :124.692   Max.   :27.9716  
     ## 
 
 ``` r
@@ -1340,13 +1418,13 @@ summary(comparison_lyon)
     ##  3rd Qu.:17.7375   3rd Qu.:13.977   3rd Qu.:19.09   3rd Qu.:21.9167  
     ##  Max.   :32.0000   Max.   :24.622   Max.   :35.23   Max.   :38.1500  
     ##                    NA's   :10                       NA's   :44       
-    ##       mean             median              sd        
-    ##  Min.   : 0.8891   Min.   : 0.8333   Min.   :0.2486  
-    ##  1st Qu.: 9.0546   1st Qu.: 9.2845   1st Qu.:2.6254  
-    ##  Median :12.6743   Median :12.7017   Median :3.6365  
-    ##  Mean   :12.7142   Mean   :12.8752   Mean   :3.6850  
-    ##  3rd Qu.:16.3552   3rd Qu.:16.4501   3rd Qu.:4.5909  
-    ##  Max.   :27.9438   Max.   :28.5500   Max.   :7.9629  
+    ##     region               mean             median              sd        
+    ##  Length:500         Min.   : 0.8891   Min.   : 0.8333   Min.   :0.2486  
+    ##  Class :character   1st Qu.: 9.0546   1st Qu.: 9.2845   1st Qu.:2.6254  
+    ##  Mode  :character   Median :12.6743   Median :12.7017   Median :3.6365  
+    ##                     Mean   :12.7142   Mean   :12.8752   Mean   :3.6850  
+    ##                     3rd Qu.:16.3552   3rd Qu.:16.4501   3rd Qu.:4.5909  
+    ##                     Max.   :27.9438   Max.   :28.5500   Max.   :7.9629  
     ## 
 
 ``` r
@@ -1369,11 +1447,11 @@ summary(comparison_paris)
     ##  3rd Qu.:36.337   3rd Qu.:37.580   3rd Qu.: 70.037   3rd Qu.:40.675  
     ##  Max.   :59.950   Max.   :59.288   Max.   :119.917   Max.   :63.083  
     ##                   NA's   :7                          NA's   :8       
-    ##       mean           median            sd        
-    ##  Min.   : 2.40   Min.   : 2.43   Min.   : 0.202  
-    ##  1st Qu.:22.91   1st Qu.:21.04   1st Qu.: 5.559  
-    ##  Median :31.58   Median :28.58   Median : 8.703  
-    ##  Mean   :32.41   Mean   :29.43   Mean   :10.073  
-    ##  3rd Qu.:41.47   3rd Qu.:38.15   3rd Qu.:13.654  
-    ##  Max.   :68.46   Max.   :59.47   Max.   :29.220  
+    ##     region               mean           median            sd        
+    ##  Length:500         Min.   : 2.40   Min.   : 2.43   Min.   : 0.202  
+    ##  Class :character   1st Qu.:22.91   1st Qu.:21.04   1st Qu.: 5.559  
+    ##  Mode  :character   Median :31.58   Median :28.58   Median : 8.703  
+    ##                     Mean   :32.41   Mean   :29.43   Mean   :10.073  
+    ##                     3rd Qu.:41.47   3rd Qu.:38.15   3rd Qu.:13.654  
+    ##                     Max.   :68.46   Max.   :59.47   Max.   :29.220  
     ## 
