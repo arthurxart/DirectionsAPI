@@ -3,10 +3,10 @@ title: "DirectionsAPI"
 author: "Arthur Artaud"
 date: "5/10/2021"
 output:
-  github_document:
+  html_document:
     toc: true
     toc_depth: 2
-    #toc_float: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
