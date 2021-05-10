@@ -15,8 +15,14 @@ knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 ```
 
+This is a comparison of the different directions API that use OpenStreetMap.
 
+I will compare them to the google maps API and the mapbox API.
 
+I will be using R principally and 3 different configurations : rural, suburban and urban to test the differences.
+For all the test cases I will create 500 randomised points of origins and destinations.
+
+All contributions are welcomed.
 
 ## Librabries
 
@@ -355,6 +361,8 @@ qtm(r_gh_creuse)
 qtm(r_gh_lyon)
 qtm(r_gh_paris)
 ```
+and unfortunately we can't have the matrix from graphhopper because this feature is not opensource
+
 
 ## Third API: OpenTripPlanner
 
@@ -494,9 +502,11 @@ qtm(route_otp_paris)
  
 and for stopping the otp java program you do this:
  
-```{r}
+```{r eval=FALSE}
 otp_stop()
 ```
+For opentripplanner the matrix is basically 250 000 itineraries combined so there is no point to make one
+
 
 ## Fourth API: Mapbox
 
@@ -577,6 +587,62 @@ r_mb_paris <- st_transform(r_mb_paris, 2154)
 qtm(r_mb_creuse)
 qtm(r_mb_lyon)
 qtm(r_mb_paris)
+```
+
+For mapbox matrix we used the mb_matrix() function wich takes sfc points,
+its likely to take a bit of time because we put a sys.sleep() for the limit rate of the mapbox api.
+Its also much more than the free limit but if you ask the api they dont restrict you instantly but the next day so you have the time to call all of them.
+
+```{r eval=FALSE}
+#matrix for creuse
+matrix_mb_creuse <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+    m_mb_creuse <- mb_matrix(
+      origins = point_sfc_creuse[(c+1):(c+10)],
+      destinations = point_sfc_creuseb[(r+1):(r+10)],
+      access_token = my_token
+      )
+    matrix_mb_creuse[(c+1):(c+10),(r+1):(r+10)] <- m_mb_creuse
+    Sys.sleep(0.9)
+  }
+}
+saveRDS(object = matrix_mb_creuse, file = "data/matrix_mb_creuse.rds")
+matrix_mb_creuse <- readRDS(file = "data/matrix_mb_creuse.rds")
+
+# matrix for lyon
+
+matrix_mb_lyon <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+    m_mb_lyon <- mb_matrix(
+      origins = point_sfc_lyon[(c+1):(c+10)],
+      destinations = point_sfc_lyonb[(r+1):(r+10)],
+      access_token = my_token
+    )
+    matrix_mb_lyon[(c+1):(c+10),(r+1):(r+10)] <- m_mb_lyon
+    Sys.sleep(0.9)
+  }
+}
+saveRDS(object = matrix_mb_lyon, file = "data/matrix_mb_lyon.rds")
+matrix_mb_lyon <- readRDS(file = "data/matrix_mb_lyon.rds")
+
+# matrix for paris
+
+matrix_mb_paris <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+    m_mb_paris <- mb_matrix(
+      origins = point_sfc_paris[(c+1):(c+10)],
+      destinations = point_sfc_parisb[(r+1):(r+10)],
+      access_token = my_token
+    )
+    matrix_mb_paris[(c+1):(c+10),(r+1):(r+10)] <- m_mb_paris
+    Sys.sleep(0.9)
+  }
+}
+saveRDS(object = matrix_mb_paris, file = "data/matrix_mb_paris.rds")
+matrix_mb_paris <- readRDS(file = "data/matrix_mb_paris.rds")
 ```
 
 
@@ -661,6 +727,60 @@ qtm(r_maps_lyon)
 qtm(r_maps_paris)
 ```
 
+For the matrix googlemaps its almost like mapbox but we use mp_matrix() and mp_get_matrix() to have the right format from the json response of the API. Its a little quicker thant mapbox because of the less limited rate of call.
+
+```{r eval=FALSE}
+matrix_maps_creuse <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+     doc <- mp_matrix(
+      origins = point_sfc_creuse[(c+1):(c+10)],
+      destinations = point_sfc_creuseb[(r+1):(r+10)],
+      key = key,
+      quiet = TRUE
+    )
+    m_maps_creuse <- mp_get_matrix(doc, value = "duration_s")
+    matrix_maps_creuse[(c+1):(c+10),(r+1):(r+10)] <- m_maps_creuse
+    Sys.sleep(0.2)
+  }
+}
+saveRDS(object = matrix_maps_creuse, file = "data/matrix_maps_creuse.rds")
+matrix_maps_creuse <- readRDS(file = "data/matrix_maps_creuse.rds")
+matrix_maps_creuse[0:10,0:10] /60
+matrix_maps_lyon <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+    doc <- mp_matrix(
+      origins = point_sfc_lyon[(c+1):(c+10)],
+      destinations = point_sfc_lyonb[(r+1):(r+10)],
+      key = key,
+      quiet = TRUE
+    )
+    m_maps_lyon <- mp_get_matrix(doc, value = "duration_s")
+    matrix_maps_lyon[(c+1):(c+10),(r+1):(r+10)] <- m_maps_lyon
+    Sys.sleep(0.2)
+  }
+}
+saveRDS(object = matrix_maps_lyon, file = "data/matrix_maps_lyon.rds")
+matrix_maps_lyon <- readRDS(file = "data/matrix_maps_lyon.rds")
+matrix_maps_paris <- matrix(nrow = 500, ncol = 500, dimnames = list(1:500,501:1000))
+for(c in seq(0,490,10)){
+  for(r in seq(0,490,10)){
+    doc <- mp_matrix(
+      origins = point_sfc_paris[(c+1):(c+10)],
+      destinations = point_sfc_parisb[(r+1):(r+10)],
+      key = key,
+      quiet = TRUE
+    )
+    m_maps_paris <- mp_get_matrix(doc, value = "duration_s")
+    matrix_maps_paris[(c+1):(c+10),(r+1):(r+10)] <- m_maps_paris
+    Sys.sleep(0.2)
+  }
+}
+saveRDS(object = matrix_maps_paris, file = "data/matrix_maps_paris.rds")
+matrix_maps_paris <- readRDS(file = "data/matrix_maps_paris.rds")
+```
+
 
 ## Sixth API: OpenRouteService
 
@@ -683,19 +803,27 @@ route_ors_creuse <- list()
 for (i in 1:length(coord_osrm_creuse)) {
   route_ors_creuse[[i]] <- ors_directions(coord_osrm_creuse[[i]], format="geojson", output = "sf")
 }
-for (i in 1:length(route_ors_creuse)) {
-  route_ors_creuse[[i]]$id <- i
-}
+
 route_ors_lyon <- list()
 for (i in 1:length(coord_osrm_lyon)) {
   route_ors_lyon[[i]] <- ors_directions(coord_osrm_lyon[[i]], format="geojson", output = "sf")
 }
-for (i in 1:length(route_ors_lyon)) {
-  route_ors_lyon[[i]]$id <- i
-}
+
 route_ors_paris <- list()
 for (i in 1:length(coord_osrm_paris)) {
   route_ors_paris[[i]] <- ors_directions(coord_osrm_paris[[i]], format="geojson", output = "sf")
+}
+
+```
+```{r}
+route_ors_creuse <- readRDS(file = "data/route_ors_creuse.rds")
+route_ors_lyon <- readRDS(file = "data/route_ors_lyon.rds")
+route_ors_paris <- readRDS(file = "data/route_ors_idf.rds")
+for (i in 1:length(route_ors_creuse)) {
+  route_ors_creuse[[i]]$id <- i
+}
+for (i in 1:length(route_ors_lyon)) {
+  route_ors_lyon[[i]]$id <- i
 }
 for (i in 1:length(route_ors_paris)) {
   route_ors_paris[[i]]$id <- i
@@ -705,9 +833,7 @@ for (i in 1:length(route_ors_paris)) {
 and we display that (sf and transforming into lambert 93)
 
 ```{r}
-route_ors_creuse <- readRDS(file = "data/route_ors_creuse.rds")
-route_ors_lyon <- readRDS(file = "data/route_ors_lyon.rds")
-route_ors_paris <- readRDS(file = "data/route_ors_idf.rds")
+
 
 r_ors_creuse <- bind_rows(route_ors_creuse)
 r_ors_lyon <- bind_rows(route_ors_lyon)
@@ -721,6 +847,40 @@ qtm(r_ors_creuse)
 qtm(r_ors_lyon)
 qtm(r_ors_paris)
 ```
+
+For ORS matrix we used ors_matrix() with a dataframe of the coord_osrm.
+
+```{r eval=FALSE}
+df_coord_creuse <- bind_rows(coord_osrm_creuse)
+df_coord_lyon <- bind_rows(coord_osrm_lyon)
+df_coord_paris <- bind_rows(coord_osrm_paris)
+#creuse
+matrix_ors_creuse <- matrix(nrow = 500, ncol = 500,dimnames = list(1:500,501:1000))
+for(c in seq(0,900,100)){
+  for(r in seq(0,900,100)){
+    m_ors_creuse <- ors_matrix(locations = df_coord_creuse, sources = seq((c),(c+99),2), destinations = seq((r+1),(r+99),2))
+    matrix_ors_creuse[((c/2)+1):((c/2)+50),((r/2)+1):((r/2)+50)] <- m_ors_creuse$durations / 60
+  }
+}
+#lyon
+matrix_ors_lyon <- matrix(nrow = 500, ncol = 500,dimnames = list(1:500,501:1000))
+for(c in seq(0,900,100)){
+  for(r in seq(0,900,100)){
+    m_ors_lyon <- ors_matrix(locations = df_coord_lyon, sources = seq((c),(c+99),2), destinations = seq((r+1),(r+99),2))
+    matrix_ors_creuse[((c/2)+1):((c/2)+50),((r/2)+1):((r/2)+50)] <- m_ors_lyon$durations / 60
+  }
+}
+
+#paris
+matrix_ors_paris <- matrix(nrow = 500, ncol = 500,dimnames = list(1:500,501:1000))
+for(c in seq(0,900,100)){
+  for(r in seq(0,900,100)){
+    m_ors_paris <- ors_matrix(locations = df_coord_idf, sources = seq((c),(c+99),2), destinations = seq((r+1),(r+99),2))
+    matrix_ors_paris[((c/2)+1):((c/2)+50),((r/2)+1):((r/2)+50)] <- m_ors_paris$durations / 60
+  }
+}
+```
+
 
 
 ## Seventh API: R5
@@ -752,6 +912,7 @@ route_r5r_creuse <- detailed_itineraries(
   mode = mode
 )
 stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
  
 pt_lyon_4326$id <- 1:nrow(pt_lyon_4326)
 pt_lyonb_4326$id <- 1:nrow(pt_lyonb_4326)
@@ -763,6 +924,7 @@ route_r5r_lyon <- detailed_itineraries(
   mode = mode
 )
 stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
  
 pt_paris_4326$id <- 1:nrow(pt_paris_4326)
 pt_parisb_4326$id <- 1:nrow(pt_parisb_4326)
@@ -774,6 +936,7 @@ route_r5r_paris <- detailed_itineraries(
   mode = mode
 )
 stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
 ```
 
 and we display the itineraries (wich are already sf so we can transform them directly into lambert 93)
@@ -792,5 +955,144 @@ qtm(route_r5r_lyon)
 qtm(route_r5r_paris)
 ```
 
+for the r5r matrix we used travel_time_matrix() but it is not made for big networks so we couldnt make more than the creuse one
 
+```{r eval=FALSE}
+r5r_core <- setup_r5(data_path = "your/data/path/creuse")
+matrix_r5r_creuse <- travel_time_matrix(r5r_core = r5r_core,
+                                        origins = point_sf_creuse,
+                                        destinations = point_sf_creuseb,
+                                        mode = mode)
+stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
+
+r5r_core <- setup_r5(data_path = "your/data/path/lyon")
+matrix_r5r_lyon <- travel_time_matrix(r5r_core = r5r_core,
+                                        origins = point_sf_lyon,
+                                        destinations = point_sf_lyonb,
+                                        mode = mode)
+stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
+
+r5r_core <- setup_r5(data_path = "your/data/path/paris")
+matrix_r5r_idf <- travel_time_matrix(r5r_core = r5r_core,
+                                        origins = point_sf_idf,
+                                        destinations = point_sf_idfb,
+                                        mode = mode)
+stop_r5(r5r_core)
+rJava::.jgc(R.gc = TRUE)
+```
+
+## Comparison between the differents API
+
+We are gonna make a dataframe with every time of each route for each API.
+First we have to replace the nonexistent value by 0 in the ors routes to have 500 values
+and then we have to take the second element of summary which is duration because the ors sf routes are not very convenient.
+```{r}
+for (i in 1:length(r_ors_creuse[[1]])) {
+  if(is.null(r_ors_creuse$summary[[i]]$duration)){
+    r_ors_creuse$summary[[i]]$distance <- 0
+    r_ors_creuse$summary[[i]]$duration <- 0
+    print(i)
+  }
+}
+for (i in 1:length(r_ors_lyon[[1]])) {
+  if(is.null(r_ors_lyon$summary[[i]]$duration)){
+    r_ors_lyon$summary[[i]]$distance <- 0
+    r_ors_lyon$summary[[i]]$duration <- 0
+    print(i)
+  }
+}
+for (i in 1:length(r_ors_paris[[1]])) {
+  if(is.null(r_ors_paris$summary[[i]]$duration)){
+    r_ors_paris$summary[[i]]$distance <- 0
+    r_ors_paris$summary[[i]]$duration <- 0
+    print(i)
+  }
+}
+
+x <- r_ors_creuse$summary
+xc <- unname(unlist(lapply(x, FUN = function(x)x[2])))
+x <- r_ors_lyon$summary
+xl <- unname(unlist(lapply(x, FUN = function(x)x[2])))
+x <- r_ors_paris$summary
+xp <- unname(unlist(lapply(x, FUN = function(x)x[2])))
+
+```
+
+Then we have to take care of the r5r and otp routes because they dont have 500 values so we have to add them by id for each region.
+
+```{r}
+#creuse r5r and otp did not have 500 values so we had to add them to the dataframe by id
+comparison_creuse <- data.frame("id" = sf_route_creuse$src, "osrm"= sf_route_creuse$duration, "graphhopper" = r_gh_creuse$time /60000, "mapbox" = r_mb_creuse$duration, "maps" = r_maps_creuse$duration_s /60, "ors" = xc /60)
+
+duration_r5r_creuse <- data.frame("id" = route_r5r_creuse$toId, "r5r" = route_r5r_creuse$total_duration)
+duration_otp_creuse <- data.frame("id" = route_otp_creuse$fromPlace, "otp" = route_otp_creuse$duration /60)
+comparison_creuse <- merge.data.frame(comparison_creuse, duration_r5r_creuse, by = "id", all = TRUE)
+comparison_creuse <- merge.data.frame(comparison_creuse, duration_otp_creuse, by = "id", all = TRUE)
+comparison_creuse <- transform(comparison_creuse, id = as.numeric(id))
+
+#lyon otp did not had the 500 values so we had to add it by id
+comparison_lyon <- data.frame("id" = sf_route_lyon$src, "osrm"= sf_route_lyon$duration, "graphhopper" = r_gh_lyon$time /60000, "mapbox" = r_mb_lyon$duration, "maps" = r_maps_lyon$duration_s /60, "ors" = xl /60, "r5r" = route_r5r_lyon$total_duration)
+duration_otp_lyon <- data.frame("id" = route_otp_lyon$fromPlace, "otp" = route_otp_lyon$duration / 60)
+comparison_lyon <- merge.data.frame(comparison_lyon, duration_otp_lyon, by = "id", all = TRUE)
+comparison_lyon <- transform(comparison_lyon, id = as.numeric(id))
+
+#paris otp did not had the 500 values so we had to add it by id
+comparison_paris <- data.frame("id" = sf_route_paris$src, "osrm"= sf_route_paris$duration, "graphhopper" = r_gh_paris$time /60000, "mapbox" = r_mb_paris$duration, "maps" = r_maps_paris$duration_s /60, "ors" = xp /60, "r5r" = route_r5r_paris$total_duration)
+duration_otp_paris <- data.frame("id" =  route_otp_paris$fromPlace, "otp" = route_otp_paris$duration /60)
+comparison_paris <- merge.data.frame(comparison_paris, duration_otp_paris, by = "id", all = TRUE)
+comparison_paris <- transform(comparison_paris, id = as.numeric(id))
+```
+
+We can make some graph to better visualize the data that we are building
+
+```{r}
+if (!require('tidyverse')){
+  install.packages('tidyverse')
+}
+library('tidyverse')
+#display the data for creuse
+d_c <- pivot_longer(comparison_creuse, cols = -id)
+ggplot(d_c, mapping = aes(x = value, color = name)) +
+  geom_density()
+#display the data for lyon
+d_l <- pivot_longer(comparison_lyon, cols = -id)
+ggplot(d_l, mapping = aes(x = value, color = name)) +
+  geom_density()
+#display the data for paris
+d_p <- pivot_longer(comparison_paris, cols = -id)
+ggplot(d_p, mapping = aes(x = value, color = name)) +
+  geom_density()
+```
+
+We now can calculate the mean, median and standard deviation but we have to make the zeros to NA value to not underestimating the values.
+
+```{r}
+#adding a column with the mean, median and the standard deviation
+comparison_creuse[comparison_creuse == 0] <- NA
+comparison_lyon[comparison_lyon == 0] <- NA
+comparison_paris[comparison_paris == 0] <- NA
+#for creuse
+comparison_creuse <- comparison_creuse %>% 
+  mutate(mean = apply(comparison_creuse[2:8],1,FUN = mean,na.rm = TRUE))
+comparison_creuse <- comparison_creuse %>% 
+  mutate(median = apply(comparison_creuse[2:8],1,FUN = median,na.rm = TRUE))
+comparison_creuse <- comparison_creuse %>% 
+  mutate(sd = apply(comparison_creuse[2:8],1,FUN = sd, na.rm = TRUE))
+#for lyon
+comparison_lyon <- comparison_lyon %>% 
+  mutate(mean = apply(comparison_lyon[2:8],1,FUN = mean, na.rm = TRUE))
+comparison_lyon <- comparison_lyon %>% 
+  mutate(median = apply(comparison_lyon[2:8],1,FUN = median, na.rm = TRUE))
+comparison_lyon <- comparison_lyon %>% 
+  mutate(sd = apply(comparison_lyon[2:8],1,FUN = sd, na.rm = TRUE))
+#for paris
+comparison_paris <- comparison_paris %>% 
+  mutate(mean = apply(comparison_paris[2:8],1,FUN = mean, na.rm = TRUE))
+comparison_paris <- comparison_paris %>% 
+  mutate(median = apply(comparison_paris[2:8],1,FUN = median, na.rm = TRUE))
+comparison_paris <- comparison_paris %>% 
+  mutate(sd = apply(comparison_paris[2:8],1,FUN = sd, na.rm = TRUE))
+```
 
