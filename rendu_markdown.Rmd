@@ -3,10 +3,10 @@ title: "DirectionsAPI"
 author: "Arthur Artaud"
 date: "5/10/2021"
 output:
-  github_document:
+  html_document:
     toc: true
     toc_depth: 2
-    #toc_float: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -1242,5 +1242,101 @@ cor_mb <- cor_mb %>%
                          method = "pearson", use = "complete.obs")))
 cor_maps
 cor_mb
+```
+
+## Distances and sinuosity
+
+We can find the distances with the same method than the durations
+
+```{r}
+x <- r_ors_creuse$summary
+dc <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+x <- r_ors_lyon$summary
+dl <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+x <- r_ors_paris$summary
+dp <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+
+comp_creuse <- data.frame("id" = sf_route_creuse$src, "osrm"= sf_route_creuse$distance, "graphhopper" = r_gh_creuse$distance /1000, "mapbox" = r_mb_creuse$distance, "maps" = r_maps_creuse$distance_m /1000, "ors" = dc /1000)
+
+distance_r5r_creuse <- data.frame("id" = route_r5r_creuse$toId, "r5r" = route_r5r_creuse$distance /1000)
+distance_otp_creuse <- data.frame("id" = route_otp_creuse$fromPlace, "otp" = route_otp_creuse$distance /1000)
+comp_creuse <- merge.data.frame(comp_creuse, distance_r5r_creuse, by = "id", all = TRUE)
+comp_creuse <- merge.data.frame(comp_creuse, distance_otp_creuse, by = "id", all = TRUE)
+comp_creuse <- transform(comp_creuse, id = as.numeric(id))
+
+#lyon otp did not had the 500 values so we had to add it by id
+comp_lyon <- data.frame("id" = sf_route_lyon$src, "osrm"= sf_route_lyon$distance, "graphhopper" = r_gh_lyon$distance /1000, "mapbox" = r_mb_lyon$distance, "maps" = r_maps_lyon$distance_m /1000, "ors" = dl /1000, "r5r" = route_r5r_lyon$distance /1000)
+distance_otp_lyon <- data.frame("id" = route_otp_lyon$fromPlace, "otp" = route_otp_lyon$distance /1000)
+comp_lyon <- merge.data.frame(comp_lyon, distance_otp_lyon, by = "id", all = TRUE)
+comp_lyon <- transform(comp_lyon, id = as.numeric(id))
+
+#paris otp did not had the 500 values so we had to add it by id
+comp_paris <- data.frame("id" = sf_route_paris$src, "osrm"= sf_route_paris$distance, "graphhopper" = r_gh_paris$distance /1000 , "mapbox" = r_mb_paris$distance, "maps" = r_maps_paris$distance_m /1000, "ors" = dp /1000 , "r5r" = route_r5r_paris$distance /1000)
+distance_otp_paris <- data.frame("id" =  route_otp_paris$fromPlace, "otp" = route_otp_paris$distance /1000)
+comp_paris <- merge.data.frame(comp_paris, distance_otp_paris, by = "id", all = TRUE)
+comp_paris <- transform(comp_paris, id = as.numeric(id))
+
+comp_creuse$region <- "creuse"
+comp_lyon$region <- "lyon"
+comp_paris$region <- "paris"
+comp_creuse[comp_creuse == 0] <- NA
+comp_lyon[comp_lyon == 0] <- NA
+comp_paris[comp_paris == 0] <- NA
+```
+
+Then we can calculate the euclidian distance for each pair of points
+
+```{r}
+library(units)
+
+pt_sf_creuse_93 <- st_transform(point_sf_creuse, crs = 2154)
+pt_sf_creuseb_93 <- st_transform(point_sf_creuseb, crs = 2154)
+pt_sf_lyon_93 <- st_transform(point_sf_lyon, crs = 2154)
+pt_sf_lyonb_93 <- st_transform(point_sf_lyonb, crs = 2154)
+pt_sf_paris_93 <- st_transform(point_sf_paris, crs = 2154)
+pt_sf_parisb_93 <- st_transform(point_sf_parisb, crs = 2154)
+# calculating the euclidian distance with st_distance
+
+dist_creuse <- st_distance(pt_sf_creuse_93,pt_sf_creuseb_93, by_element = TRUE)
+dist_lyon <- st_distance(pt_sf_lyon_93, pt_sf_lyonb_93, by_element = TRUE)
+dist_paris <- st_distance(pt_sf_paris_93, pt_sf_parisb_93, by_element = TRUE)
+
+dist_creuse <- as.numeric(set_units(dist_creuse, km))
+dist_lyon <- as.numeric(set_units(dist_creuse, km))
+dist_paris <- as.numeric(set_units(dist_paris, km))
+
+dist_creuse <- as.data.frame(dist_creuse)
+dist_lyon <- as.data.frame(dist_lyon)
+dist_paris <- as.data.frame(dist_paris)
+
+dist_creuse$id <- 1:nrow(dist_creuse)
+dist_lyon$id <- 1:nrow(dist_lyon)
+dist_paris$id <- 1:nrow(dist_paris)
+
+comp_creuse <- merge.data.frame(comp_creuse, dist_creuse, by = "id")
+comp_lyon <- merge.data.frame(comp_lyon, dist_lyon, by = "id")
+comp_paris <- merge.data.frame(comp_paris, dist_paris, by = "id")
+```
+
+With that we can calculate a sinuosity index
+
+```{r}
+# calculating the sinuosity index (euclidian distance/ route distance)
+
+diff_creuse <- apply(comp_creuse[2:8], 2, FUN = function(x)x/comp_creuse$dist_creuse)
+diff_lyon <- apply(comp_lyon[2:8], 2, FUN = function(x)x/comp_lyon$dist_lyon)
+diff_paris <- apply(comp_paris[2:8], 2, FUN = function(x)x/comp_paris$dist_paris)
+
+diff_creuse <- as.data.frame(diff_creuse)
+diff_lyon <- as.data.frame(diff_lyon)
+diff_paris <- as.data.frame(diff_paris)
+
+diff_creuse$id <- 1:nrow(diff_creuse)
+diff_lyon$id <- 1:nrow(diff_lyon)
+diff_paris$id <- 1:nrow(diff_paris)
+
+summary(diff_creuse)
+summary(diff_lyon)
+summary(diff_paris)
 ```
 

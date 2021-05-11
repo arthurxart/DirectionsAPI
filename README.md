@@ -16,6 +16,7 @@ Arthur Artaud
 -   [Seventh API: R5](#seventh-api-r5)
 -   [Comparison between APIs](#comparison-between-apis)
 -   [Correlation](#correlation)
+-   [Distances and sinuosity](#distances-and-sinuosity)
 
 This is a comparison of the different directions API that use
 OpenStreetMap.
@@ -1558,3 +1559,156 @@ cor_mb
     ## otp         0.9732899 0.9709019 0.8942910 0.9729519
     ## ors         0.9858805 0.9321412 0.8841539 0.9711418
     ## r5r         0.8896150 0.8219957 0.7948287 0.9247184
+
+## Distances and sinuosity
+
+We can find the distances with the same method than the durations
+
+``` r
+x <- r_ors_creuse$summary
+dc <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+x <- r_ors_lyon$summary
+dl <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+x <- r_ors_paris$summary
+dp <- unname(unlist(lapply(x, FUN = function(x)x[1])))
+
+comp_creuse <- data.frame("id" = sf_route_creuse$src, "osrm"= sf_route_creuse$distance, "graphhopper" = r_gh_creuse$distance /1000, "mapbox" = r_mb_creuse$distance, "maps" = r_maps_creuse$distance_m /1000, "ors" = dc /1000)
+
+distance_r5r_creuse <- data.frame("id" = route_r5r_creuse$toId, "r5r" = route_r5r_creuse$distance /1000)
+distance_otp_creuse <- data.frame("id" = route_otp_creuse$fromPlace, "otp" = route_otp_creuse$distance /1000)
+comp_creuse <- merge.data.frame(comp_creuse, distance_r5r_creuse, by = "id", all = TRUE)
+comp_creuse <- merge.data.frame(comp_creuse, distance_otp_creuse, by = "id", all = TRUE)
+comp_creuse <- transform(comp_creuse, id = as.numeric(id))
+
+#lyon otp did not had the 500 values so we had to add it by id
+comp_lyon <- data.frame("id" = sf_route_lyon$src, "osrm"= sf_route_lyon$distance, "graphhopper" = r_gh_lyon$distance /1000, "mapbox" = r_mb_lyon$distance, "maps" = r_maps_lyon$distance_m /1000, "ors" = dl /1000, "r5r" = route_r5r_lyon$distance /1000)
+distance_otp_lyon <- data.frame("id" = route_otp_lyon$fromPlace, "otp" = route_otp_lyon$distance /1000)
+comp_lyon <- merge.data.frame(comp_lyon, distance_otp_lyon, by = "id", all = TRUE)
+comp_lyon <- transform(comp_lyon, id = as.numeric(id))
+
+#paris otp did not had the 500 values so we had to add it by id
+comp_paris <- data.frame("id" = sf_route_paris$src, "osrm"= sf_route_paris$distance, "graphhopper" = r_gh_paris$distance /1000 , "mapbox" = r_mb_paris$distance, "maps" = r_maps_paris$distance_m /1000, "ors" = dp /1000 , "r5r" = route_r5r_paris$distance /1000)
+distance_otp_paris <- data.frame("id" =  route_otp_paris$fromPlace, "otp" = route_otp_paris$distance /1000)
+comp_paris <- merge.data.frame(comp_paris, distance_otp_paris, by = "id", all = TRUE)
+comp_paris <- transform(comp_paris, id = as.numeric(id))
+
+comp_creuse$region <- "creuse"
+comp_lyon$region <- "lyon"
+comp_paris$region <- "paris"
+comp_creuse[comp_creuse == 0] <- NA
+comp_lyon[comp_lyon == 0] <- NA
+comp_paris[comp_paris == 0] <- NA
+```
+
+Then we can calculate the euclidian distance for each pair of points
+
+``` r
+library(units)
+
+pt_sf_creuse_93 <- st_transform(point_sf_creuse, crs = 2154)
+pt_sf_creuseb_93 <- st_transform(point_sf_creuseb, crs = 2154)
+pt_sf_lyon_93 <- st_transform(point_sf_lyon, crs = 2154)
+pt_sf_lyonb_93 <- st_transform(point_sf_lyonb, crs = 2154)
+pt_sf_paris_93 <- st_transform(point_sf_paris, crs = 2154)
+pt_sf_parisb_93 <- st_transform(point_sf_parisb, crs = 2154)
+# calculating the euclidian distance with st_distance
+
+dist_creuse <- st_distance(pt_sf_creuse_93,pt_sf_creuseb_93, by_element = TRUE)
+dist_lyon <- st_distance(pt_sf_lyon_93, pt_sf_lyonb_93, by_element = TRUE)
+dist_paris <- st_distance(pt_sf_paris_93, pt_sf_parisb_93, by_element = TRUE)
+
+dist_creuse <- as.numeric(set_units(dist_creuse, km))
+dist_lyon <- as.numeric(set_units(dist_creuse, km))
+dist_paris <- as.numeric(set_units(dist_paris, km))
+
+dist_creuse <- as.data.frame(dist_creuse)
+dist_lyon <- as.data.frame(dist_lyon)
+dist_paris <- as.data.frame(dist_paris)
+
+dist_creuse$id <- 1:nrow(dist_creuse)
+dist_lyon$id <- 1:nrow(dist_lyon)
+dist_paris$id <- 1:nrow(dist_paris)
+
+comp_creuse <- merge.data.frame(comp_creuse, dist_creuse, by = "id")
+comp_lyon <- merge.data.frame(comp_lyon, dist_lyon, by = "id")
+comp_paris <- merge.data.frame(comp_paris, dist_paris, by = "id")
+```
+
+With that we can calculate a sinuosity index
+
+``` r
+# calculating the sinuosity index (euclidian distance/ route distance)
+
+diff_creuse <- apply(comp_creuse[2:8], 2, FUN = function(x)x/comp_creuse$dist_creuse)
+diff_lyon <- apply(comp_lyon[2:8], 2, FUN = function(x)x/comp_lyon$dist_lyon)
+diff_paris <- apply(comp_paris[2:8], 2, FUN = function(x)x/comp_paris$dist_paris)
+
+diff_creuse <- as.data.frame(diff_creuse)
+diff_lyon <- as.data.frame(diff_lyon)
+diff_paris <- as.data.frame(diff_paris)
+
+diff_creuse$id <- 1:nrow(diff_creuse)
+diff_lyon$id <- 1:nrow(diff_lyon)
+diff_paris$id <- 1:nrow(diff_paris)
+
+summary(diff_creuse)
+```
+
+    ##       osrm        graphhopper        mapbox           maps      
+    ##  Min.   :1.103   Min.   :1.102   Min.   :1.103   Min.   :1.133  
+    ##  1st Qu.:1.305   1st Qu.:1.287   1st Qu.:1.315   1st Qu.:1.295  
+    ##  Median :1.380   Median :1.365   Median :1.402   Median :1.366  
+    ##  Mean   :1.416   Mean   :1.393   Mean   :1.436   Mean   :1.395  
+    ##  3rd Qu.:1.480   3rd Qu.:1.456   3rd Qu.:1.522   3rd Qu.:1.460  
+    ##  Max.   :3.090   Max.   :3.089   Max.   :3.199   Max.   :3.116  
+    ##                                                                 
+    ##       ors             r5r             otp              id       
+    ##  Min.   :1.102   Min.   :1.131   Min.   :1.091   Min.   :  1.0  
+    ##  1st Qu.:1.283   1st Qu.:1.410   1st Qu.:1.305   1st Qu.:125.8  
+    ##  Median :1.356   Median :1.487   Median :1.389   Median :250.5  
+    ##  Mean   :1.387   Mean   :1.526   Mean   :1.420   Mean   :250.5  
+    ##  3rd Qu.:1.452   3rd Qu.:1.598   3rd Qu.:1.502   3rd Qu.:375.2  
+    ##  Max.   :3.089   Max.   :3.589   Max.   :3.137   Max.   :500.0  
+    ##  NA's   :1       NA's   :9       NA's   :1
+
+``` r
+summary(diff_lyon)
+```
+
+    ##       osrm            graphhopper            mapbox              maps          
+    ##  Min.   : 0.003344   Min.   : 0.003342   Min.   : 0.00335   Min.   : 0.007406  
+    ##  1st Qu.: 0.087912   1st Qu.: 0.087868   1st Qu.: 0.09381   1st Qu.: 0.092747  
+    ##  Median : 0.147786   Median : 0.145689   Median : 0.16149   Median : 0.157803  
+    ##  Mean   : 0.268868   Mean   : 0.266788   Mean   : 0.29909   Mean   : 0.305340  
+    ##  3rd Qu.: 0.253574   3rd Qu.: 0.259127   3rd Qu.: 0.29649   3rd Qu.: 0.299502  
+    ##  Max.   :10.131169   Max.   :10.404577   Max.   :10.55723   Max.   :10.523630  
+    ##                                                                                
+    ##       ors                r5r                 otp                 id       
+    ##  Min.   : 0.00334   Min.   : 0.000756   Min.   : 0.00334   Min.   :  1.0  
+    ##  1st Qu.: 0.08924   1st Qu.: 0.092036   1st Qu.: 0.08631   1st Qu.:125.8  
+    ##  Median : 0.14550   Median : 0.159215   Median : 0.14766   Median :250.5  
+    ##  Mean   : 0.26662   Mean   : 0.293238   Mean   : 0.28746   Mean   :250.5  
+    ##  3rd Qu.: 0.25612   3rd Qu.: 0.287052   3rd Qu.: 0.27127   3rd Qu.:375.2  
+    ##  Max.   :10.44028   Max.   :10.292113   Max.   :11.08048   Max.   :500.0  
+    ##  NA's   :10                             NA's   :44
+
+``` r
+summary(diff_paris)
+```
+
+    ##       osrm        graphhopper        mapbox           maps      
+    ##  Min.   :1.041   Min.   :1.040   Min.   :1.041   Min.   :1.040  
+    ##  1st Qu.:1.301   1st Qu.:1.293   1st Qu.:1.345   1st Qu.:1.339  
+    ##  Median :1.408   Median :1.393   Median :1.495   Median :1.486  
+    ##  Mean   :1.467   Mean   :1.447   Mean   :1.569   Mean   :1.549  
+    ##  3rd Qu.:1.561   3rd Qu.:1.527   3rd Qu.:1.675   3rd Qu.:1.666  
+    ##  Max.   :4.337   Max.   :4.335   Max.   :6.022   Max.   :5.786  
+    ##                                                                 
+    ##       ors             r5r             otp              id       
+    ##  Min.   :1.043   Min.   :1.129   Min.   :1.040   Min.   :  1.0  
+    ##  1st Qu.:1.323   1st Qu.:1.405   1st Qu.:1.352   1st Qu.:125.8  
+    ##  Median :1.455   Median :1.499   Median :1.531   Median :250.5  
+    ##  Mean   :1.507   Mean   :1.535   Mean   :1.567   Mean   :250.5  
+    ##  3rd Qu.:1.627   3rd Qu.:1.609   3rd Qu.:1.711   3rd Qu.:375.2  
+    ##  Max.   :4.335   Max.   :4.252   Max.   :4.335   Max.   :500.0  
+    ##  NA's   :7                       NA's   :8
