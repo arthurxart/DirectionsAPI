@@ -3,10 +3,10 @@ title: "DirectionsAPI"
 author: "Arthur Artaud"
 date: "5/10/2021"
 output:
-  html_document:
+  github_document:
     toc: true
     toc_depth: 2
-    toc_float: true
+    #toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -1029,7 +1029,37 @@ matrix_r5r_creuse <- readRDS(file = "data/matrix_r5r_creuse.rds")
 ```
 
 
-## Comparison between the differents API
+Now that we have all our routes in sf we can put them back into lambert 93 to have only one projection
+
+```{r}
+r_ors_creuse <- st_transform(r_ors_creuse, 2154)
+r_ors_lyon <- st_transform(r_ors_lyon, 2154)
+r_ors_paris <- st_transform(r_ors_paris, 2154)
+
+r_mb_creuse <- st_transform(r_mb_creuse, 2154)
+r_mb_lyon <- st_transform(r_mb_lyon, 2154)
+r_mb_paris <- st_transform(r_mb_paris, 2154)
+
+r_maps_creuse <- st_transform(r_maps_creuse, 2154)
+r_maps_lyon <- st_transform(r_maps_lyon, 2154)
+r_maps_paris <- st_transform(r_maps_paris, 2154)
+
+r_gh_creuse <- st_transform(r_gh_creuse, 2154)
+r_gh_lyon <- st_transform(r_gh_lyon, 2154)
+r_gh_paris <- st_transform(r_gh_paris, 2154)
+
+route_otp_creuse <- st_transform(route_otp_creuse, 2154)
+route_otp_lyon <- st_transform(route_otp_lyon, 2154)
+route_otp_paris <- st_transform(route_otp_paris, 2154)
+
+route_r5r_creuse <- st_transform(route_r5r_creuse, 2154)
+route_r5r_lyon <- st_transform(route_r5r_lyon, 2154)
+route_r5r_paris <- st_transform(route_r5r_paris, 2154)
+```
+
+
+
+## Comparison between APIs
 
 We are gonna make a dataframe with every time of each route for each API.
 First we have to replace the nonexistent value by 0 in the ors routes to have 500 values
@@ -1156,5 +1186,61 @@ comparison_paris <- comparison_paris %>%
 summary(comparison_creuse)
 summary(comparison_lyon)
 summary(comparison_paris)
+```
+
+## Correlation
+
+We can also do some correlation with the osm apis and the maps and mapbox ones:
+
+```{r}
+cor_maps <- data.frame(row.names = c("osrm", "graphhopper", "otp", "ors", "r5r"))
+cor_mb <- data.frame(row.names = c("osrm", "graphhopper", "otp", "ors", "r5r"))
+
+apis_osm <- c("osrm", "graphhopper", "otp", "ors", "r5r")
+
+#for maps
+cor_maps <- cor_maps %>% 
+  mutate(creuse = apply(
+      (comparison_creuse%>%select(all_of(apis_osm))), 2,
+      FUN = function(x)cor(x = x, y = comparison_creuse$maps,
+                           method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(lyon = apply(
+    (comparison_lyon%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_lyon$maps,
+                         method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(paris = apply(
+    (comparison_paris%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_paris$maps,
+                         method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(all = apply(
+    (comparison_all%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_all$maps,
+                         method = "pearson", use = "complete.obs")))
+#for mapbox
+cor_mb <- cor_mb %>% 
+  mutate(creuse = apply(
+    (comparison_creuse%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_creuse$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(lyon = apply(
+    (comparison_lyon%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_lyon$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(paris = apply(
+    (comparison_paris%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_paris$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(all = apply(
+    (comparison_all%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_all$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_maps
+cor_mb
 ```
 

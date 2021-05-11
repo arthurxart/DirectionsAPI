@@ -14,8 +14,8 @@ Arthur Artaud
 -   [Fifth API: Googlemaps](#fifth-api-googlemaps)
 -   [Sixth API: OpenRouteService](#sixth-api-openrouteservice)
 -   [Seventh API: R5](#seventh-api-r5)
--   [Comparison between the differents
-    API](#comparison-between-the-differents-api)
+-   [Comparison between APIs](#comparison-between-apis)
+-   [Correlation](#correlation)
 
 This is a comparison of the different directions API that use
 OpenStreetMap.
@@ -1168,7 +1168,36 @@ rJava::.jgc(R.gc = TRUE)
 matrix_r5r_creuse <- readRDS(file = "data/matrix_r5r_creuse.rds")
 ```
 
-## Comparison between the differents API
+Now that we have all our routes in sf we can put them back into lambert
+93 to have only one projection
+
+``` r
+r_ors_creuse <- st_transform(r_ors_creuse, 2154)
+r_ors_lyon <- st_transform(r_ors_lyon, 2154)
+r_ors_paris <- st_transform(r_ors_paris, 2154)
+
+r_mb_creuse <- st_transform(r_mb_creuse, 2154)
+r_mb_lyon <- st_transform(r_mb_lyon, 2154)
+r_mb_paris <- st_transform(r_mb_paris, 2154)
+
+r_maps_creuse <- st_transform(r_maps_creuse, 2154)
+r_maps_lyon <- st_transform(r_maps_lyon, 2154)
+r_maps_paris <- st_transform(r_maps_paris, 2154)
+
+r_gh_creuse <- st_transform(r_gh_creuse, 2154)
+r_gh_lyon <- st_transform(r_gh_lyon, 2154)
+r_gh_paris <- st_transform(r_gh_paris, 2154)
+
+route_otp_creuse <- st_transform(route_otp_creuse, 2154)
+route_otp_lyon <- st_transform(route_otp_lyon, 2154)
+route_otp_paris <- st_transform(route_otp_paris, 2154)
+
+route_r5r_creuse <- st_transform(route_r5r_creuse, 2154)
+route_r5r_lyon <- st_transform(route_r5r_lyon, 2154)
+route_r5r_paris <- st_transform(route_r5r_paris, 2154)
+```
+
+## Comparison between APIs
 
 We are gonna make a dataframe with every time of each route for each
 API. First we have to replace the nonexistent value by 0 in the ors
@@ -1282,31 +1311,31 @@ display_maps <- ggplot(comparison_all, mapping = aes(y = maps, colour = region))
 display_maps + geom_point(aes(x = osrm))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 ``` r
 display_maps + geom_point(aes(x = graphhopper))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-2.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-2.png)<!-- -->
 
 ``` r
 display_maps + geom_point(aes(x = otp))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-3.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-3.png)<!-- -->
 
 ``` r
 display_maps + geom_point(aes(x = ors))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-4.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-4.png)<!-- -->
 
 ``` r
 display_maps + geom_point(aes(x = r5r))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-5.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-5.png)<!-- -->
 
 ``` r
 display_mb <- ggplot(comparison_all, mapping = aes(y = mapbox, colour = region))
@@ -1314,31 +1343,31 @@ display_mb <- ggplot(comparison_all, mapping = aes(y = mapbox, colour = region))
 display_mb + geom_point(aes(x = osrm))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-6.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-6.png)<!-- -->
 
 ``` r
 display_mb + geom_point(aes(x = graphhopper))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-7.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-7.png)<!-- -->
 
 ``` r
 display_mb + geom_point(aes(x = otp))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-8.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-8.png)<!-- -->
 
 ``` r
 display_mb + geom_point(aes(x = ors))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-9.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-9.png)<!-- -->
 
 ``` r
 display_mb + geom_point(aes(x = r5r))
 ```
 
-![](rendu_markdown_files/figure-gfm/unnamed-chunk-47-10.png)<!-- -->
+![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-10.png)<!-- -->
 
 We now can calculate the mean, median and standard deviation but we have
 to make the zeros to NA value to not underestimating the values.
@@ -1455,3 +1484,77 @@ summary(comparison_paris)
     ##                     3rd Qu.:41.47   3rd Qu.:38.15   3rd Qu.:13.654  
     ##                     Max.   :68.46   Max.   :59.47   Max.   :29.220  
     ## 
+
+## Correlation
+
+We can also do some correlation with the osm apis and the maps and
+mapbox ones:
+
+``` r
+cor_maps <- data.frame(row.names = c("osrm", "graphhopper", "otp", "ors", "r5r"))
+cor_mb <- data.frame(row.names = c("osrm", "graphhopper", "otp", "ors", "r5r"))
+
+apis_osm <- c("osrm", "graphhopper", "otp", "ors", "r5r")
+
+#for maps
+cor_maps <- cor_maps %>% 
+  mutate(creuse = apply(
+      (comparison_creuse%>%select(all_of(apis_osm))), 2,
+      FUN = function(x)cor(x = x, y = comparison_creuse$maps,
+                           method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(lyon = apply(
+    (comparison_lyon%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_lyon$maps,
+                         method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(paris = apply(
+    (comparison_paris%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_paris$maps,
+                         method = "pearson", use = "complete.obs")))
+cor_maps <- cor_maps %>% 
+  mutate(all = apply(
+    (comparison_all%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_all$maps,
+                         method = "pearson", use = "complete.obs")))
+#for mapbox
+cor_mb <- cor_mb %>% 
+  mutate(creuse = apply(
+    (comparison_creuse%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_creuse$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(lyon = apply(
+    (comparison_lyon%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_lyon$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(paris = apply(
+    (comparison_paris%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_paris$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_mb <- cor_mb %>% 
+  mutate(all = apply(
+    (comparison_all%>%select(all_of(apis_osm))), 2,
+    FUN = function(x)cor(x = x, y = comparison_all$mapbox,
+                         method = "pearson", use = "complete.obs")))
+cor_maps
+```
+
+    ##                creuse      lyon     paris       all
+    ## osrm        0.9890222 0.8710077 0.9649219 0.9862802
+    ## graphhopper 0.9890639 0.8778636 0.9615468 0.9851608
+    ## otp         0.9690857 0.9494589 0.9629948 0.9787470
+    ## ors         0.9878334 0.8802467 0.9662823 0.9801087
+    ## r5r         0.9025000 0.7703496 0.8754826 0.9356606
+
+``` r
+cor_mb
+```
+
+    ##                creuse      lyon     paris       all
+    ## osrm        0.9887730 0.9386748 0.9174238 0.9822072
+    ## graphhopper 0.9876312 0.9286706 0.8928670 0.9784849
+    ## otp         0.9732899 0.9709019 0.8942910 0.9729519
+    ## ors         0.9858805 0.9321412 0.8841539 0.9711418
+    ## r5r         0.8896150 0.8219957 0.7948287 0.9247184
