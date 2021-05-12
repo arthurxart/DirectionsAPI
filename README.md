@@ -1309,31 +1309,31 @@ comparison_all <- rbind.data.frame(comparison_all, comparison_paris)
 
 display_maps <- ggplot(comparison_all, mapping = aes(y = maps, colour = region))
 
-display_maps + geom_point(aes(x = osrm))
+display_maps + geom_point(aes(x = osrm)) + ylim(0,max(comparison_all$osrm)) + xlim(0,max(comparison_all$osrm))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 ``` r
-display_maps + geom_point(aes(x = graphhopper))
+display_maps + geom_point(aes(x = graphhopper)) + ylim(0,max(comparison_all$graphhopper)) + xlim(0,max(comparison_all$graphhopper))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-2.png)<!-- -->
 
 ``` r
-display_maps + geom_point(aes(x = otp))
+display_maps + geom_point(aes(x = otp)) + ylim(0,max(comparison_all$otp, na.rm = TRUE)) + xlim(0,max(comparison_all$otp, na.rm = TRUE))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-3.png)<!-- -->
 
 ``` r
-display_maps + geom_point(aes(x = ors))
+display_maps + geom_point(aes(x = ors)) + ylim(0,max(comparison_all$ors)) + xlim(0,max(comparison_all$ors))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-4.png)<!-- -->
 
 ``` r
-display_maps + geom_point(aes(x = r5r))
+display_maps + geom_point(aes(x = r5r)) + ylim(0,max(comparison_all$r5r, na.rm = TRUE)) + xlim(0,max(comparison_all$r5r, na.rm = TRUE))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-5.png)<!-- -->
@@ -1341,31 +1341,31 @@ display_maps + geom_point(aes(x = r5r))
 ``` r
 display_mb <- ggplot(comparison_all, mapping = aes(y = mapbox, colour = region))
 
-display_mb + geom_point(aes(x = osrm))
+display_mb + geom_point(aes(x = osrm)) + ylim(0,max(comparison_all$osrm)) + xlim(0,max(comparison_all$osrm))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-6.png)<!-- -->
 
 ``` r
-display_mb + geom_point(aes(x = graphhopper))
+display_mb + geom_point(aes(x = graphhopper)) + ylim(0,max(comparison_all$graphhopper)) + xlim(0,max(comparison_all$graphhopper))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-7.png)<!-- -->
 
 ``` r
-display_mb + geom_point(aes(x = otp))
+display_mb + geom_point(aes(x = otp)) + ylim(0,max(comparison_all$otp, na.rm = TRUE)) + xlim(0,max(comparison_all$otp, na.rm = TRUE))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-8.png)<!-- -->
 
 ``` r
-display_mb + geom_point(aes(x = ors))
+display_mb + geom_point(aes(x = ors)) + ylim(0,max(comparison_all$ors)) + xlim(0,max(comparison_all$ors))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-9.png)<!-- -->
 
 ``` r
-display_mb + geom_point(aes(x = r5r))
+display_mb + geom_point(aes(x = r5r)) + ylim(0,max(comparison_all$r5r, na.rm = TRUE)) + xlim(0,max(comparison_all$r5r, na.rm = TRUE))
 ```
 
 ![](rendu_markdown_files/figure-gfm/unnamed-chunk-48-10.png)<!-- -->
